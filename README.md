@@ -114,6 +114,145 @@ or other network elements.
 
 ## Master Node
 
+It is time now to create the first clone, the Master Node. To do so, right click on the template VM
+and select Clone. Name it **master** and proceed with the cloning.
+
+![Master Node](assets/tutorial6.png)
+
+Before starting the master node VM, we need to configure the network settings and the port forwarding for ssh connection.
+
+### Initial Settings
+- First things first, and since the hostname is still the same as the template, we need to change it. Edit
+the file **/etc/hostname** and replace the current hostname with the new one. Save and exit.
+```bash
+sudo vim /etc/hostname # Replace the current hostname with the new one (master)
+```
+Restart the master node VM to apply the changes:
+```bash
+sudo shutdown -h now
+```
+- Go to the network settings of the master node and enable the Adapter 2, setting it as Internal
+Network and CloudBasicNet. This will allow the master node to communicate with the working
+nodes.
+![Internal Network](assets/tutorial7.png)
+- Go now to the port forwarding settings in the Adapter 1 and add a new rule for SSH connection. For the host port, any available port on your host machine can be used, as long as it is not already in use by another process. The guest port is typically the default SSH port inside the guest VM (or container), usually port 22, unless you’ve configured the guest OS to use a different port.
+This will allow you to connect to the master node via SSH.
+![SSH](assets/tutorial8.png)
+
+Save the settings and start the master node VM.
+
+### SSH connection
+
+You can bootstrap the VM and ssh from a terminal of your Host Machine (if you like).
+On the master node, install the openssh-server package:
+```bash
+sudo apt install openssh-server -y
+```
+And check its status, if it is not running, start it:
+```bash
+sudo systemctl status ssh
+sudo systemctl enable ssh
+```
+Now on your host machine, you can connect to the master node via SSH:
+```bash
+ssh -p 3002 <username>@127.0.0.1
+```
+> **Warning**: an error message like the one below could appear in this phase:
+>```bash
+>ssh -p 3002 christianvm@127.0.0.1
+>@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+>@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+>@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+>IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+>Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+>It is also possible that a host key has just been changed.
+>The fingerprint for the ED25519 key sent by the remote host is
+>SHA256:RnZykj9+CZJTAXDNuGRcmR3GVPj9Jh93ve+Cjai1eIE.
+>Please contact your system administrator.
+>Add correct host key in /Users/christianfaccio/.ssh/known_hosts to get rid of this message.
+>Offending ECDSA key in /Users/christianfaccio/.ssh/known_hosts:6
+>Host key for [127.0.0.1]:2222 has changed and you have requested strict checking.
+>Host key verification failed. 
+>```
+>if this happens, just remove the old keys from the file `~/.ssh/known_hosts` referring to the host port you chose.
+
+If you want to avoid typing the password every time you connect via SSH, you can set up a
+passwordless SSH connection. To do so, generate a new SSH key pair on your host machine:
+```bash
+ssh-keygen -t rsa # Press Enter to save the key in the default location
+```
+Copy the public key to the master node:
+```bash
+ssh-copy-id -p 3002 <username>@127.0.0.1
+```
+Now you can connect to the master node without typing the password.
+
+### Network Configuration
+
+Let’s now check the network settings. The master node should have two network interfaces: one
+connected to the internet (NAT) and the other connected to the internal network.
+```bash
+ip link show
+
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode
+DEFAULT group default qlen 1000
+link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel
+state UP mode DEFAULT group default qlen 1000
+link/ether 08:00:27:3b:6d:34 brd ff:ff:ff:ff:ff:ff
+3: enp0s9: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode
+DEFAULT group default qlen 1000
+link/ether 08:00:27:89:ae:d9 brd ff:ff:ff:ff:ff:ff
+```
+ 
+If you look closely, you will see that the interface **enp0s8** is connected to the internet (NAT)
+and the interface **enp0s9** is connected to the internal network, but the VM does not have an IP
+address assigned to it. Now we will configure the adapter, i.e. assign an IP address to the interface
+**enp0s9** . It will be the master node so it will act as a gateway for the working nodes and will have
+IP **192.168.0.1**.
+
+```bash
+sudo vim /etc/netplan/50-cloud-init.yaml
+
+network:
+    ethernets:
+        enp0s8:
+            dhcp4: true
+        enp0s9:
+            dhcp4: false
+            addresses: [192.168.0.1/24]
+    version: 2
+```
+
+Apply the changes with the following command:
+
+```bash
+sudo netplan apply
+```
+
+> **Observation**: Master Node IP
+The master node has a static IP on the internal network since it will act as a gateway for the
+working nodes. The working nodes will have dynamic IPs assigned by the DHCP server
+running on the master node.
+
+Edit the hosts file to assign names to the cluster that should include names for each node as follows:
+```bash
+sudo vim /etc/hosts
+
+127.0.0.1 localhost
+192.168.0.1 master
+
+# The following lines are desirable for IPv6 capable hosts
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+```
+
+We do not specify a static IP for the working nodes since we will later set up a DHCP server on the
+master node to assign IPs dynamically to the working nodes.
+
 
 
 
