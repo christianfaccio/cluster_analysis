@@ -510,6 +510,57 @@ Save and exit, then run:
 sudo mount -a
 ```
 
+## Measuring Performances
+
+#### HPCC
+
+1. Install HPCC on every node
+```bash
+sudo apt update
+sudo apt install -y hpcc
+```
+
+2. Install OpenMPI on every node:
+```bash 
+sudo apt install -y openmpi-bin libopenmpi-dev
+```
+
+>**Warning**: ensure there is a passwordless ssh connection between master and working nodes
+
+3. On the master node, generate the HPCC configuration file:
+```bash 
+vim hpccinf.txt
+```
+Modify:
+- **Processor Count**: Set the total number of CPU cores in the cluster.
+- **Memory Size**: Adjust based on available RAM.
+- **MPI Settings**: Ensure correct paths.
+
+Check https://www.advancedclustering.com/act_kb/tune-hpl-dat-file/ to use the right parameters for your cluster.
+
+Create the Hosts File on the Master Node:
+```bash 
+vim hosts
+```
+
+and add the following lines:
+```bash
+<worker_node_1_IP> slots=<n_cores_worker_1>
+<worker_node_2_IP> slots=<n_cores_worker_2>
+```
+
+4. Run HPCC with the correct path:
+```bash 
+mpirun -np 4 -hostfile hosts hpcc
+```
+This will run the HPCC tests on the working nodes. To see results open the `hpccoutf.txt` file. 
+
+>**WARNING**: SSH connection MUST be passwordless between all the nodes, otherwise you will get an error
+
+>**TIP**: The files `hosts` and `hpccinf.txt` created before can be put in the distributed system between all the nodes, this way it is simpler to give the right permissions to the nodes to read the files. 
+
+
+
 
 
 
