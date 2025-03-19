@@ -163,24 +163,14 @@ ssh -p 3002 <username>@127.0.0.1
 >@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 >@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
 >@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
->IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
->Someone could be eavesdropping on you right now (man-in-the-middle attack)!
->It is also possible that a host key has just been changed.
->The fingerprint for the ED25519 key sent by the remote host is
->SHA256:RnZykj9+CZJTAXDNuGRcmR3GVPj9Jh93ve+Cjai1eIE.
->Please contact your system administrator.
->Add correct host key in /Users/christianfaccio/.ssh/known_hosts to get rid of this message.
->Offending ECDSA key in /Users/christianfaccio/.ssh/known_hosts:6
->Host key for [127.0.0.1]:2222 has changed and you have requested strict checking.
->Host key verification failed. 
->```
->if this happens, just remove the old keys from the file `~/.ssh/known_hosts` referring to the host port you chose.
+> ...
 
 If you want to avoid typing the password every time you connect via SSH, you can set up a
 passwordless SSH connection. To do so, generate a new SSH key pair on your host machine:
 ```bash
 ssh-keygen -t rsa # Press Enter to save the key in the default location
-```
+````
+
 Copy the public key to the master node:
 ```bash
 ssh-copy-id -p 3002 <username>@127.0.0.1
@@ -252,6 +242,212 @@ ff02::2 ip6-allrouters
 
 We do not specify a static IP for the working nodes since we will later set up a DHCP server on the
 master node to assign IPs dynamically to the working nodes.
+
+
+## Working Nodes
+
+Now redo the same process for the two working nodes.
+
+Open VirtualBox and clone the above create **template**, creating **node1** and **node2**.
+
+Go on the settings of each working node, on the Network tab, and select Internal Network for Adapter1, name it as the one of the master node (ClusterVimNet in this case). 
+
+![Working nodes Network](assets/tutorial9.png)
+
+Click "ok" and start the VMs.
+
+For each VM, change the hostname and the hosts file:
+```bash
+sudo vim /etc/hostname #change the name and insert the right one for each VM (the one you setted in VirtualBox)
+```
+```bash 
+sudo vim /etc/hosts
+
+127.0.0.1 localhost
+192.168.0.1 master
+
+# The following lines are desirable for IPv6 capable hosts
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+```
+
+Restart the VMs to apply the changes.
+
+## DHCP and DNS configuration
+
+To configure DHCP on your master node, you can use a tool like dnsmasq or isc-dhcp-server. Since
+you’re setting up a network and assigning IPs dynamically, let’s go through the configuration steps
+using dnsmasq, which is lightweight and commonly used for DHCP and DNS management.
+
+Here are the steps to set up DHCP on the master node:
+1. Start the **master** node VM, log in, and install dnsmasq:
+```bash 
+sudo apt update
+sudo apt install dnsmasq -y
+```
+2. Configure dnsmasq: Edit the configuration file **/etc/dnsmasq.conf**:
+```bash 
+sudo vim /etc/dnsmasq.conf
+```
+Add the following lines to the configuration file:
+```bash 
+# Specify the internal network interface (change if needed)
+interface=enp0s9s  # Use the correct internal interface (check with `ip a`)
+
+# DHCP range (adjust as needed)
+dhcp-range=192.168.0.100,192.168.0.200,12h  # Assign IPs in this range for 12 hours
+
+# Set the gateway (the master node itself)
+dhcp-option=3,192.168.0.1  
+
+# Set the DNS server (the master node itself)
+dhcp-option=6,192.168.0.1  
+
+# Local DNS resolution
+local=/cluster.local/
+expand-hosts
+domain=cluster.local
+```
+
+Replace **enp0s9** with the name of the internal network interface.
+
+3. Ensure the master node has a static IP on its internal network interface (**enp0s9**):
+```bash 
+sudo vim /etc/network/interfaces
+
+auto enp0s9
+iface enp0s9 inet static
+address 192.168.1.1
+netmask 255.255.255.0
+```
+
+Restart the dnsmasq service to apply the changes:
+```bash
+sudo systemctl restart dnsmasq
+sudo systemctl enable dnsmasq
+```
+
+4. Ensure IP Forwarding is Enabled
+Edit `/etc/sysctl.conf`
+```bash
+net.ipv4.ip_forward=1 #uncomment this line
+```
+
+Apply changes:
+```bash
+sudo sysctl -p
+```
+
+Now the working node should now have an IP address assigned by the DHCP server running on
+the master node. 
+
+5. Test connection pinging the master node
+```bash
+ping 192.168.0.1
+```
+
+### Master node as Gateway
+
+To let the working node connect to the internet, you have to setup the master node as the default gateway. 
+Enable NAT on the Master Node. Assuming your master node has two interfaces:
+- **enp0s8** connected to the internet (NAT)
+- **enp0s9** connected to the internal network
+Run the following command:
+```bash
+sudo iptables -t nat -A POSTROUTING -o enp0s8 -j MASQUERADE
+sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+sudo iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+```
+Replace enp0s8 with the name of the interface connected to the internet.
+To persist the rules:
+```bash
+sudo apt-get install iptables-persistent # For Debian/Ubuntu
+sudo netfilter-persistent save
+sudo netfilter-persistent reload
+```
+Configure the Woring Node to Use the Master Node as a Gateway. On the working node, set
+the master node as the default gateway:
+```bash
+sudo ip route add default via <MASTER\_NODE\_IP>
+```
+
+You are now connected to the Internet, try to ping:
+```bash
+ping 8.8.8.8
+```
+
+> **Warning**: DNS is not configured yet, so pinging google.com as an example will not work
+
+To add DNS resolution, modify the `/etc/netplan/50-cloud-init.yaml`file in the working node, this way:
+```bash
+network:
+    ethernets:
+        enp0s8:
+            dhcp4: true
+            dhcp-identifier: mac
+            nameservers:
+                addresses: [192.168.0.1, 8.8.8.8, 8.8.4.4]
+    version: 2
+```
+Try to ping a domain name:
+```bash
+ping google.com
+```
+
+### SSH on working node
+
+Install SSH server in the working node:
+```bash
+sudo apt update
+sudo apt install openssh-server -y
+```
+
+Start and enable SSH server:
+```bash 
+sudo systemctl enable ssh
+sudo systemctl status ssh
+```
+
+Now you can ssh into the working node from the master node:
+```bash
+ssh <username>@<working\_node\_IP>
+```
+To know the working node IP, since it is assigned dynamically, you can check it with the following
+command in the working node:
+```bash 
+hostname -I
+```
+
+>**Tip:** to have a passwordless access via ssh, generate a new SSH key pair on your master node:
+>```bash 
+>ssh-keygen -t rsa -b 4096 # Press Enter to save the key in the default location
+>```
+>Copy the public key to the working node
+>```bash 
+>ssh-copy-id user@<working_node_IP>
+>``` 
+>Set the correct permissions on the working node
+>```bash 
+>chmod 700 ~/.ssh
+>chmod 600 ~/.ssh/authorized_keys
+>````
+>Test ssh connection
+>```bash
+>ssh user@<working_node_IP>
+>```
+
+Now just clone this working node to create as many other nodes as you want, change their hostname and you are set up. Remember to check if they have the same IP assigned.
+
+## Distributed Filesystem
+
+
+
+
+
+
 
 
 
