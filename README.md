@@ -443,9 +443,72 @@ Now just clone this working node to create as many other nodes as you want, chan
 
 ## Distributed Filesystem
 
+NFS is one of the most commonly used distributed file systems for sharing files across multiple
+nodes in a network.
+1. Install the NFS server package on the master node:
+```bash 
+sudo apt install nfs-kernel-server
+``` 
 
+2. Create a directory to share:
+```bash 
+sudo mkdir /shared
+sudo chmod 777 /mnt/shared
+``` 
+3. Configure the NFS server: Edit the file `/etc/exports`:
+```bash 
+sudo vim /etc/exports
+``` 
+and add the following line in the file:
+```bash 
+/shared 192.168.0.0/24(rw,sync,no_subtree_check) #This allows all nodes in the 192.168.0.0 network to access the shared folder.
+``` 
+Replace `<working_node_IP>` with the IP address of the working node.
+4. Export the shared directory:
+```bash 
+sudo exportfs -a
+``` 
+5. Restart the NFS server to apply the changes:
+```bash
+sudo systemctl restart nfs-kernel-server
+sudo systemctl enable nfs-kernel-server
+```
+6. Install the NFS client package on the working node:
+```bash 
+sudo apt install nfs-common
+```
+7. Create a directory to mount the shared directory:
+```bash 
+sudo mkdir /shared
+```
+8. Mount the shared directory on the working node:
+```bash 
+sudo mount <master\_node\_IP>:/shared /shared
 
+df -h
+...
+192.168.0.1:/shared 24G 2.8G 20G 13% /shared #you should see this line
+```
+Replace `<master_node_IP>` with the IP address of the master node.
 
+Try now to create a file in the `/shared` folder in the master node:
+```bash 
+touch /shared/test.txt
+```
+
+You should see this file in the working nodes:
+```bash 
+ls /shared
+```
+
+9. Make the mount permanent. In the working nodes, edit the `/etc/fstab` file adding the following line:
+```bash 
+192.168.0.1:/mnt/shared /mnt/shared nfs defaults 0 0
+```
+Save and exit, then run:
+```bash 
+sudo mount -a
+```
 
 
 
