@@ -583,8 +583,8 @@ Below are the performance values for the 13 tests of the HPCC suite.
 | HPL (Gflop/s) | 10.64 | The system performed very well in the HPL benchmark, with both good performance and accuracy, confirming its strength in solving large-scale linear systems. |
 
 
+---
 #### Network test (Iperf3)
-# Network Performance Analysis (iperf3 Results)
 
 | Test Scenario            | Direction         | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmissions (Retr) | Remarks                             |
 |--------------------------|-------------------|-------------------|---------------------|------------------------|-------------------------------------|
@@ -593,20 +593,58 @@ Below are the performance values for the 13 tests of the HPCC suite.
 | **Node01 - Node02**       | Forward           | 3.45 GBytes       | 2.96 Gbits/sec      | 270                    | Slightly lower performance, fewer retransmissions |
 | **Node01 - Node02**       | Reverse           | 3.31 GBytes       | 2.84 Gbits/sec      | 45                     | Stable performance with minimal retransmissions |
 
-## Key Observations:
+Key Observations:
 - The network throughput ranged between **2.84 Gbits/sec** and **3.18 Gbits/sec** across the various test directions, showing a high-performance network.
 - **Retransmissions** were moderate, with **Master01 - Node01** showing the highest count, which suggests some potential for packet loss or network congestion in the forward direction.
 - The reverse direction tests generally performed better in terms of throughput, indicating that the reverse path might be less congested or optimized.
 - **Node01 - Node02** had fewer retransmissions, suggesting better stability, even though the throughput was slightly lower than the other tests.
 
-## Conclusion:
+Conclusion:
 Overall, the network between the nodes is performing well with high throughput. However, there are some fluctuations in performance, likely caused by network conditions such as congestion, load, or routing differences, which are most noticeable in the forward direction from **Master01 to Node01**. 
 
 The results suggest that while the network is fast, there may be occasional packet loss or congestion that can be improved for optimal performance.
 
+---
+
+#### Stress-ng Test Results
+
+Test Configuration:
+- **Stress-ng Version**: 0.17.06
+- **Test Duration**: 60 seconds per stressor
+- **Test Command**: `stress-ng --cpu 2 --timeout 60s --verbose`
+- **System Information**:
+  - **OS**: Ubuntu 6.8.0-55-generic
+  - **Kernel**: 6.8.0-55-generic
+  - **CPU**: 2 processors (Online: 2, Configured: 2)
+  - **RAM**: 1.9 GB (Free: 1.1 GB)
+  - **Filesystem Type**: ext2 (Master), nfs (Node01, Node02)
+
+Nodes Tested:
+1. **Master Node** (master01)
+2. **Node 1** (node01)
+3. **Node 2** (node02)
+
+Test Results:
+
+| Node         | Direction       | Stressors Started | Stressors Exited | Time Taken   | Metrics Check |
+|--------------|-----------------|-------------------|------------------|--------------|---------------|
+| **Master01** | CPU Stress Test | 2                 | 2                | 1 min, 0.08s  | Passed (2 CPU)|
+| **Node01**   | CPU Stress Test | 2                 | 2                | 1 min, 0.04s  | Passed (2 CPU)|
+| **Node02**   | CPU Stress Test | 2                 | 2                | 1 min, 0.07s  | Passed (2 CPU)|
+
+Key Observations:
+- All three nodes ran the stress tests for **60 seconds** with 2 CPU stressors each.
+- **All tests passed successfully** without any failures.
+- **Metrics** for the stressors were validated as sane for all nodes.
+- The performance was **stable across nodes**, with minor variations in test completion times (between **1 min, 0.04s** and **1 min, 0.08s**).
+- The **RAM** usage was observed as sufficient (1.9GB total, with 1.1GB free) across all nodes during the tests.
+
+Conclusion:
+The stress tests on all nodes (Master, Node01, and Node02) were successfully completed with no failures. The system showed good stability and performance under CPU stress for the given time. No issues with resource availability or system crashes were noted, making the system robust under load.
 
 
 
+---
 
 #### Disk I/O test (IOZone)
 
