@@ -570,7 +570,7 @@ Below are the performance values for the 13 tests of the HPCC suite.
 | MPI Random Access (GUP/s)   | 0.0033   | The random memory access speed is very low (only 0.00334 GUP/s), indicating that the system's memory bandwidth and latency are major bottlenecks. |
 | Star Random Access (GUP/s)   | 0.0687   | StarRandomAccess is ~20x faster (0.0687 GUP/s vs. 0.00334 GUP/s). This suggests that memory access patterns in StarRandomAccess are more cache-friendly, while MPIRandomAccess suffers from higher memory latency.|
 | Single Random Access (GUP/s) | 0.0921 | Higher GUP/s than StarRandomAccess (0.0687 GUP/s) and MPIRandomAccess (0.00334 GUP/s). Since only one node was tested, the memory contention across multiple nodes didn't affect performance. |
-| PTRANS | Wall: 0.550, CPU: 4.273 | Wall-time bandwidth (0.550 GB/s) is much lower than CPU bandwidth (up to 4.273 GB/s), suggesting MPI communication overhead is a bottleneck and memory access patterns might be inefficient across nodes. |
+| PTRANS (GB/s) | Wall: 0.550, CPU: 4.273 | Wall-time bandwidth (0.550 GB/s) is much lower than CPU bandwidth (up to 4.273 GB/s), suggesting MPI communication overhead is a bottleneck and memory access patterns might be inefficient across nodes. |
 | StarDGEMM (avg. GFLOP/s) | 2.909 | Stable performance across runs (only a small difference between min/max GFLOP/s). No numerical errors, meaning the computation is accurate. Performance is limited (DGEMM is usually memory-bandwidth bound on small clusters).|
 | SingleDGEMM (GFLOP/s) | 4.34 | SingleDGEMM (4.34 GFLOP/s) is ~49% faster than StarDGEMM (2.91 GFLOP/s avg). Better performance in single-node test suggests that multi-node communication overhead or memory bottlenecks are affecting StarDGEMM. |
 | StarSTREAM Copy (GB/s) | 23.20 | Best, average, and worst times for each operation are consistent, indicating stable performance across multiple tests. Copy operation has the highest bandwidth (23.20 GB/s), which is expected as it is the simplest operation and often reveals the system’s raw memory bandwidth. The system is performing well for these memory-bound operations, and the performance is stable with no errors detected.
@@ -583,6 +583,26 @@ Below are the performance values for the 13 tests of the HPCC suite.
 | HPL (Gflop/s) | 10.64 | The system performed very well in the HPL benchmark, with both good performance and accuracy, confirming its strength in solving large-scale linear systems. |
 
 
+#### Network test (Iperf3)
+# Network Performance Analysis (iperf3 Results)
+
+| Test Scenario            | Direction         | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmissions (Retr) | Remarks                             |
+|--------------------------|-------------------|-------------------|---------------------|------------------------|-------------------------------------|
+| **Master01 - Node01**     | Forward           | 3.46 GBytes       | 2.97 Gbits/sec      | 887                    | Consistent throughput, moderate retransmissions |
+| **Master01 - Node01**     | Reverse           | 3.71 GBytes       | 3.18 Gbits/sec      | 744                    | Slightly better performance in reverse direction |
+| **Node01 - Node02**       | Forward           | 3.45 GBytes       | 2.96 Gbits/sec      | 270                    | Slightly lower performance, fewer retransmissions |
+| **Node01 - Node02**       | Reverse           | 3.31 GBytes       | 2.84 Gbits/sec      | 45                     | Stable performance with minimal retransmissions |
+
+## Key Observations:
+- The network throughput ranged between **2.84 Gbits/sec** and **3.18 Gbits/sec** across the various test directions, showing a high-performance network.
+- **Retransmissions** were moderate, with **Master01 - Node01** showing the highest count, which suggests some potential for packet loss or network congestion in the forward direction.
+- The reverse direction tests generally performed better in terms of throughput, indicating that the reverse path might be less congested or optimized.
+- **Node01 - Node02** had fewer retransmissions, suggesting better stability, even though the throughput was slightly lower than the other tests.
+
+## Conclusion:
+Overall, the network between the nodes is performing well with high throughput. However, there are some fluctuations in performance, likely caused by network conditions such as congestion, load, or routing differences, which are most noticeable in the forward direction from **Master01 to Node01**. 
+
+The results suggest that while the network is fast, there may be occasional packet loss or congestion that can be improved for optimal performance.
 
 
 
@@ -610,6 +630,8 @@ iozone -a -i 0 -i 1 -i 2 -f ./testfile > iozone_distrsys_output.txt
 ![](results/rewrite_performance_plot.png)
 ![](results/read.1_performance_plot.png)
 ![](results/write.1_performance_plot.png)
+
+
 
 
 
