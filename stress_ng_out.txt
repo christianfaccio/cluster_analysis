@@ -1,0 +1,150 @@
+stress-ng: debug: [3156] invoked with 'stress-ng --cpu 2 --timeout 60s --verbose' by user 1000 'christianvm'
+stress-ng: debug: [3156] stress-ng 0.17.06
+stress-ng: debug: [3156] system: Linux master01 6.8.0-55-generic #57-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 12 23:20:18 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [3156] RAM total: 1.9G, RAM free: 1.1G, swap free: 0.0
+stress-ng: debug: [3156] temporary file path: '/shared', filesystem type: ext2 (5006205 blocks available)
+stress-ng: debug: [3156] 2 processors online, 2 processors configured
+stress-ng: info:  [3156] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [3156] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [3156] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [3156] dispatching hogs: 2 cpu
+stress-ng: debug: [3157] invoked with 'stress-ng --cpu 2 --timeout 60s --verbose' by user 1000 'christianvm'
+stress-ng: debug: [3157] stress-ng 0.17.06
+stress-ng: debug: [3157] system: Linux master01 6.8.0-55-generic #57-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 12 23:20:18 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [3157] RAM total: 1.9G, RAM free: 1.1G, swap free: 0.0
+stress-ng: debug: [3157] temporary file path: '/shared', filesystem type: ext2 (5006205 blocks available)
+stress-ng: debug: [3157] 2 processors online, 2 processors configured
+stress-ng: info:  [3157] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [3157] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [3156] starting stressors
+stress-ng: debug: [3156] 2 stressors started
+stress-ng: debug: [3159] cpu: [3159] started (instance 1 on CPU 1)
+stress-ng: debug: [3158] cpu: [3158] started (instance 0 on CPU 0)
+stress-ng: debug: [3157] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [3157] dispatching hogs: 2 cpu
+stress-ng: debug: [3157] starting stressors
+stress-ng: debug: [3157] 2 stressors started
+stress-ng: debug: [3160] cpu: [3160] started (instance 0 on CPU 1)
+stress-ng: debug: [1545] invoked with 'stress-ng --cpu 2 --timeout 60s --verbose' by user 1000 'christianvm'
+stress-ng: debug: [1546] invoked with 'stress-ng --cpu 2 --timeout 60s --verbose' by user 1000 'christianvm'
+stress-ng: debug: [3158] cpu: using method 'all'
+stress-ng: debug: [1627] invoked with 'stress-ng --cpu 2 --timeout 60s --verbose' by user 1000 'christianvm'
+stress-ng: debug: [1545] stress-ng 0.17.06
+stress-ng: debug: [1545] system: Linux node01 6.8.0-55-generic #57-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 12 23:20:18 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [1545] RAM total: 1.9G, RAM free: 1.2G, swap free: 0.0
+stress-ng: debug: [1545] temporary file path: '/shared', filesystem type: nfs (78222 blocks available)
+stress-ng: debug: [1545] 2 processors online, 2 processors configured
+stress-ng: info:  [1545] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [1626] invoked with 'stress-ng --cpu 2 --timeout 60s --verbose' by user 1000 'christianvm'
+stress-ng: debug: [1545] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [1545] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [1545] dispatching hogs: 2 cpu
+stress-ng: debug: [1545] starting stressors
+stress-ng: debug: [1546] stress-ng 0.17.06
+stress-ng: debug: [1546] system: Linux node01 6.8.0-55-generic #57-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 12 23:20:18 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [1546] RAM total: 1.9G, RAM free: 1.2G, swap free: 0.0
+stress-ng: debug: [1546] temporary file path: '/shared', filesystem type: nfs (78222 blocks available)
+stress-ng: debug: [1546] 2 processors online, 2 processors configured
+stress-ng: debug: [1545] 2 stressors started
+stress-ng: debug: [1547] cpu: [1547] started (instance 0 on CPU 0)
+stress-ng: debug: [1548] cpu: [1548] started (instance 1 on CPU 0)
+stress-ng: info:  [1546] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [1546] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [1547] cpu: using method 'all'
+stress-ng: debug: [3160] cpu: using method 'all'
+stress-ng: debug: [3161] cpu: [3161] started (instance 1 on CPU 0)
+stress-ng: debug: [1627] stress-ng 0.17.06
+stress-ng: debug: [1627] system: Linux node02 6.8.0-55-generic #57-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 12 23:20:18 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [1546] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [1546] dispatching hogs: 2 cpu
+stress-ng: debug: [1546] starting stressors
+stress-ng: debug: [1626] stress-ng 0.17.06
+stress-ng: debug: [1626] system: Linux node02 6.8.0-55-generic #57-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 12 23:20:18 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [1626] RAM total: 1.9G, RAM free: 1.1G, swap free: 0.0
+stress-ng: debug: [1626] temporary file path: '/shared', filesystem type: nfs (78222 blocks available)
+stress-ng: debug: [1626] 2 processors online, 2 processors configured
+stress-ng: info:  [1626] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [1626] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [1546] 2 stressors started
+stress-ng: debug: [1549] cpu: [1549] started (instance 0 on CPU 1)
+stress-ng: debug: [1550] cpu: [1550] started (instance 1 on CPU 1)
+stress-ng: debug: [1627] RAM total: 1.9G, RAM free: 1.1G, swap free: 0.0
+stress-ng: debug: [1627] temporary file path: '/shared', filesystem type: nfs (78222 blocks available)
+stress-ng: debug: [1627] 2 processors online, 2 processors configured
+stress-ng: info:  [1627] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [1627] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [1627] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [1627] dispatching hogs: 2 cpu
+stress-ng: debug: [1627] starting stressors
+stress-ng: debug: [1626] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [1626] dispatching hogs: 2 cpu
+stress-ng: debug: [1626] starting stressors
+stress-ng: debug: [1626] 2 stressors started
+stress-ng: debug: [1629] cpu: [1629] started (instance 1 on CPU 0)
+stress-ng: debug: [1628] cpu: [1628] started (instance 0 on CPU 0)
+stress-ng: debug: [1630] cpu: [1630] started (instance 0 on CPU 1)
+stress-ng: debug: [1627] 2 stressors started
+stress-ng: debug: [1628] cpu: using method 'all'
+stress-ng: debug: [1549] cpu: using method 'all'
+stress-ng: debug: [1631] cpu: [1631] started (instance 1 on CPU 1)
+stress-ng: debug: [1630] cpu: using method 'all'
+stress-ng: debug: [3158] cpu: [3158] exited (instance 0 on CPU 0)
+stress-ng: debug: [1547] cpu: [1547] exited (instance 0 on CPU 1)
+stress-ng: debug: [3160] cpu: [3160] exited (instance 0 on CPU 1)
+stress-ng: debug: [3156] cpu: [3158] terminated (success)
+stress-ng: debug: [3157] cpu: [3160] terminated (success)
+stress-ng: debug: [1628] cpu: [1628] exited (instance 0 on CPU 1)
+stress-ng: debug: [1629] cpu: [1629] exited (instance 1 on CPU 1)
+stress-ng: debug: [1545] cpu: [1547] terminated (success)
+stress-ng: debug: [1550] cpu: [1550] exited (instance 1 on CPU 1)
+stress-ng: debug: [1626] cpu: [1628] terminated (success)
+stress-ng: debug: [1549] cpu: [1549] exited (instance 0 on CPU 1)
+stress-ng: debug: [1546] cpu: [1549] terminated (success)
+stress-ng: debug: [1626] cpu: [1629] terminated (success)
+stress-ng: debug: [1546] cpu: [1550] terminated (success)
+stress-ng: debug: [1626] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [1626] skipped: 0
+stress-ng: info:  [1626] passed: 2: cpu (2)
+stress-ng: info:  [1626] failed: 0
+stress-ng: info:  [1626] metrics untrustworthy: 0
+stress-ng: info:  [1626] successful run completed in 1 min, 0.02 secs
+stress-ng: debug: [1546] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [1546] skipped: 0
+stress-ng: info:  [1546] passed: 2: cpu (2)
+stress-ng: info:  [1546] failed: 0
+stress-ng: info:  [1546] metrics untrustworthy: 0
+stress-ng: info:  [1546] successful run completed in 1 min, 0.02 secs
+stress-ng: debug: [1548] cpu: [1548] exited (instance 1 on CPU 0)
+stress-ng: debug: [1545] cpu: [1548] terminated (success)
+stress-ng: debug: [1545] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [1545] skipped: 0
+stress-ng: info:  [1545] passed: 2: cpu (2)
+stress-ng: info:  [1545] failed: 0
+stress-ng: info:  [1545] metrics untrustworthy: 0
+stress-ng: info:  [1545] successful run completed in 1 min, 0.04 secs
+stress-ng: debug: [1631] cpu: [1631] exited (instance 1 on CPU 0)
+stress-ng: debug: [3161] cpu: [3161] exited (instance 1 on CPU 0)
+stress-ng: debug: [3157] cpu: [3161] terminated (success)
+stress-ng: debug: [3157] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [3157] skipped: 0
+stress-ng: info:  [3157] passed: 2: cpu (2)
+stress-ng: info:  [3157] failed: 0
+stress-ng: info:  [3157] metrics untrustworthy: 0
+stress-ng: info:  [3157] successful run completed in 1 min, 0.07 secs
+stress-ng: debug: [1630] cpu: [1630] exited (instance 0 on CPU 1)
+stress-ng: debug: [1627] cpu: [1630] terminated (success)
+stress-ng: debug: [1627] cpu: [1631] terminated (success)
+stress-ng: debug: [1627] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [1627] skipped: 0
+stress-ng: info:  [1627] passed: 2: cpu (2)
+stress-ng: info:  [1627] failed: 0
+stress-ng: info:  [1627] metrics untrustworthy: 0
+stress-ng: info:  [1627] successful run completed in 1 min, 0.07 secs
+stress-ng: debug: [3159] cpu: [3159] exited (instance 1 on CPU 1)
+stress-ng: debug: [3156] cpu: [3159] terminated (success)
+stress-ng: debug: [3156] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [3156] skipped: 0
+stress-ng: info:  [3156] passed: 2: cpu (2)
+stress-ng: info:  [3156] failed: 0
+stress-ng: info:  [3156] metrics untrustworthy: 0
+stress-ng: info:  [3156] successful run completed in 1 min, 0.08 secs

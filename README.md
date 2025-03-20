@@ -1,11 +1,11 @@
-# Cluster Analysis
-Final project of the Cloud Computing course - UniTS
+<div align="center">
+    <h1>Cloud Computing Basic Report</h1>
+    <h3>Author: Christian Faccio</h3>
+    <h5>Email: christianfaccio@outlook.it</h4>
+    <h5>Github: <a href="https://github.com/christianfaccio" target="_blank">christianfaccio</a></h5>
+</div>
 
-## Author
-
-**Name:** Christian Faccio  
-**Email:** christianfaccio@outlook.it 
-**GitHub:** [@christianfaccio](https://github.com/christianfaccio)
+---
 
 
 ## Table of Contents
@@ -26,6 +26,8 @@ Important things:
 
 1. Download [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 2. Download [Ubuntu 20.04](https://ubuntu.com/download/desktop)
+
+---
 
 ## VM Cluster
 
@@ -510,6 +512,8 @@ Save and exit, then run:
 sudo mount -a
 ```
 
+---
+
 ## Measuring Performances
 
 #### HPCC
@@ -560,8 +564,28 @@ This will run the HPCC tests on the working nodes. To see results open the `hpcc
 >**TIP**: The files `hosts` and `hpccinf.txt` created before can be put in the distributed system between all the nodes, this way it is simpler to give the right permissions to the nodes to read the files. 
 
 
+#### Disk I/O test (IOZone)
 
+```bash
+iozone -a -i 0 -i 1 -i 2 -f ./testfile > iozone_distrsys_output.txt
+```
 
+**Purpose**: Evaluates disk I/O performance using `iozone`.
+
+- `-a`: This option tells iozone to perform a set of automatic tests (all tests for performance).
+- `-i 0 -i 1 -i 2`: These options specify the types of tests to run:
+    - `-i 0`: Sequential write test
+    - `-i 1`: Sequential read test
+    - `-i 2`: Random read/write test
+- `-f ./testfile`: Specifies the file (`testfile`) to be used for testing, located in the current directory (which in your case would be the shared directory).
+- `iozone_distrsys_output.txt`: Redirects the output of the test to a file (`iozone_distrsys_output.txt`).
+
+![](results/read_performance_plot.png)
+![](results/write_performance_plot.png)
+![](results/reread_performance_plot.png)
+![](results/rewrite_performance_plot.png)
+![](results/read.1_performance_plot.png)
+![](results/write.1_performance_plot.png)
 
 
 
