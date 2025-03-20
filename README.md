@@ -563,6 +563,30 @@ This will run the HPCC tests on the working nodes. To see results open the `hpcc
 
 >**TIP**: The files `hosts` and `hpccinf.txt` created before can be put in the distributed system between all the nodes, this way it is simpler to give the right permissions to the nodes to read the files. 
 
+Below are the performance values for the 13 tests of the HPCC suite.
+
+| Test | Value | Comment |
+|----------|----------|----------|
+| MPI Random Access (GUP/s)   | 0.0033   | The random memory access speed is very low (only 0.00334 GUP/s), indicating that the system's memory bandwidth and latency are major bottlenecks. |
+| Star Random Access (GUP/s)   | 0.0687   | StarRandomAccess is ~20x faster (0.0687 GUP/s vs. 0.00334 GUP/s). This suggests that memory access patterns in StarRandomAccess are more cache-friendly, while MPIRandomAccess suffers from higher memory latency.|
+| Single Random Access (GUP/s) | 0.0921 | Higher GUP/s than StarRandomAccess (0.0687 GUP/s) and MPIRandomAccess (0.00334 GUP/s). Since only one node was tested, the memory contention across multiple nodes didn't affect performance. |
+| PTRANS | Wall: 0.550, CPU: 4.273 | Wall-time bandwidth (0.550 GB/s) is much lower than CPU bandwidth (up to 4.273 GB/s), suggesting MPI communication overhead is a bottleneck and memory access patterns might be inefficient across nodes. |
+| StarDGEMM (avg. GFLOP/s) | 2.909 | Stable performance across runs (only a small difference between min/max GFLOP/s). No numerical errors, meaning the computation is accurate. Performance is limited (DGEMM is usually memory-bandwidth bound on small clusters).|
+| SingleDGEMM (GFLOP/s) | 4.34 | SingleDGEMM (4.34 GFLOP/s) is ~49% faster than StarDGEMM (2.91 GFLOP/s avg). Better performance in single-node test suggests that multi-node communication overhead or memory bottlenecks are affecting StarDGEMM. |
+| StarSTREAM Copy (GB/s) | 23.20 | Best, average, and worst times for each operation are consistent, indicating stable performance across multiple tests. Copy operation has the highest bandwidth (23.20 GB/s), which is expected as it is the simplest operation and often reveals the system’s raw memory bandwidth. The system is performing well for these memory-bound operations, and the performance is stable with no errors detected.
+| SingleSTREAM Copy (GB/s) | 41.50 | Single-node performance is significantly better than the multi-node performance from the StarSTREAM test. Copy performance is 41.50 GB/s on Node 2, much higher than the 23.20 GB/s from StarSTREAM across multiple nodes. |
+| MPIFFT (Gflop/s) | 2.133 | The Gflop/s rate (2.133 Gflop/s) is relatively low for an FFT, suggesting that memory bandwidth or computational overhead is limiting the performance. Very small error (1.894e-15) indicates high accuracy, meaning the results are highly reliable. |
+| StarFFT (Gflop/s) | 3.44 | The StarFFT performance is better compared to the MPIFFT test with a higher Gflop/s rate (average 3.44 Gflop/s). This suggests that multi-node communication or load balancing may be improving efficiency. The error is negligible (2.061e-15), indicating that the test passed with high accuracy. |
+| SingleFFT (Gflop/s) | 4.07 | 4.07 Gflop/s is a solid result for a single node, showing efficient performance for FFT calculations on Node 1. No errors detected, indicating high accuracy and correctness. |
+| Min-Max Latency (ms) | 0.000628-0.166512 | The benchmark demonstrates very low latency for communication, especially for small messages, as indicated by the min latency (0.000628 ms). |
+| Min-Max Ping Pong Bandwidth (MB/s) | 194.301-27467.623 | The bandwidth with smaller messages (like 8 bytes) is limited, but the system still maintains a relatively low latency, indicating good responsiveness for small data transfers. For larger message sizes (2MB), the system provides strong bandwidth performance, particularly with naturally ordered communication. |
+| HPL (Gflop/s) | 10.64 | The system performed very well in the HPL benchmark, with both good performance and accuracy, confirming its strength in solving large-scale linear systems. |
+
+
+
+
+
+
 
 #### Disk I/O test (IOZone)
 
