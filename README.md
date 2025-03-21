@@ -26,6 +26,7 @@ Important things:
 
 1. Download [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 2. Download [Ubuntu 20.04](https://ubuntu.com/download/desktop)
+3. Download [Docker](https://www.docker.com/products/docker-desktop/)
 
 ---
 
@@ -47,12 +48,12 @@ Important things:
 1. Create a machine and name it **template**
 2. Choose a location (usually, leave it as default)
 3. Load the ISO image
-![ISO image](assets/tutorial1.png)
+![ISO image](VM/assets/tutorial1.png)
 4. Change username and password if you want, but remember them for the next steps
-![Username and PW](assets/tutorial2.png)
+![Username and PW](VM/assets/tutorial2.png)
 5. Assign the resources as specified in the requirements
-![Resources](assets/tutorial3.png)
-![Resources](assets/tutorial4.png)
+![Resources](VM/assets/tutorial3.png)
+![Resources](VM/assets/tutorial4.png)
 6. Finish the setup and start the machine
 7. Once started and logged in, update the system
 ```bash
@@ -112,14 +113,14 @@ Upper Bound: 192.168.56.199
 IP allocation within **192.168.56.2 - 192.168.56.199** , avoiding conflicts with the host
 or other network elements.
 
-![Internal Network](assets/tutorial5.png)
+![Internal Network](VM/assets/tutorial5.png)
 
 ## Master Node
 
 It is time now to create the first clone, the Master Node. To do so, right click on the template VM
 and select Clone. Name it **master** and proceed with the cloning.
 
-![Master Node](assets/tutorial6.png)
+![Master Node](VM/assets/tutorial6.png)
 
 Before starting the master node VM, we need to configure the network settings and the port forwarding for ssh connection.
 
@@ -136,10 +137,10 @@ sudo shutdown -h now
 - Go to the network settings of the master node and enable the Adapter 2, setting it as Internal
 Network and CloudBasicNet. This will allow the master node to communicate with the working
 nodes.
-![Internal Network](assets/tutorial7.png)
+![Internal Network](VM/assets/tutorial7.png)
 - Go now to the port forwarding settings in the Adapter 1 and add a new rule for SSH connection. For the host port, any available port on your host machine can be used, as long as it is not already in use by another process. The guest port is typically the default SSH port inside the guest VM (or container), usually port 22, unless you’ve configured the guest OS to use a different port.
 This will allow you to connect to the master node via SSH.
-![SSH](assets/tutorial8.png)
+![SSH](VM/assets/tutorial8.png)
 
 Save the settings and start the master node VM.
 
@@ -254,7 +255,7 @@ Open VirtualBox and clone the above create **template**, creating **node1** and 
 
 Go on the settings of each working node, on the Network tab, and select Internal Network for Adapter1, name it as the one of the master node (ClusterVimNet in this case). 
 
-![Working nodes Network](assets/tutorial9.png)
+![Working nodes Network](VM/assets/tutorial9.png)
 
 Click "ok" and start the VMs.
 
@@ -662,14 +663,178 @@ iozone -a -i 0 -i 1 -i 2 -f ./testfile > iozone_distrsys_output.txt
 - `-f ./testfile`: Specifies the file (`testfile`) to be used for testing, located in the current directory (which in your case would be the shared directory).
 - `iozone_distrsys_output.txt`: Redirects the output of the test to a file (`iozone_distrsys_output.txt`).
 
-![](results/read_performance_plot.png)
-![](results/write_performance_plot.png)
-![](results/reread_performance_plot.png)
-![](results/rewrite_performance_plot.png)
-![](results/read.1_performance_plot.png)
-![](results/write.1_performance_plot.png)
+![](VM/results/read_performance_plot.png)
+![](VM/results/write_performance_plot.png)
+![](VM/results/reread_performance_plot.png)
+![](VM/results/rewrite_performance_plot.png)
+![](VM/results/read.1_performance_plot.png)
+![](VM/results/write.1_performance_plot.png)
 
+---
 
+## Containers' Cluster
+
+#### Configuring the files
+
+- `dockerfile`
+```bash
+FROM ubuntu:latest
+
+# Set non-interactive mode for apt-get
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    openssh-server rsync iputils-ping \
+    sysbench stress-ng iozone3 iperf3 \
+    netcat-openbsd wget unzip hpcc \
+    openmpi-bin openmpi-common openmpi-doc libopenmpi-dev \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# ✅ Create SSH folder and set correct permissions
+RUN mkdir -p /var/run/sshd /home/user/.ssh /shared/results \
+    && chmod 700 /home/user/.ssh
+
+# ✅ Create a new user 'user' with a home directory
+RUN useradd -m -s /bin/bash user \
+    && echo "user:userpassword" | chpasswd \
+    && echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# ✅ Ensure SSH is configured for user
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config \
+    && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config \
+    && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
+    && sed -i 's|#AuthorizedKeysFile.*|AuthorizedKeysFile .ssh/authorized_keys|' /etc/ssh/sshd_config
+
+# ✅ Copy SSH keys for user (passwordless login)
+COPY ssh_keys/id_rsa.pub /home/user/.ssh/authorized_keys
+COPY ssh_keys/id_rsa /home/user/.ssh/id_rsa
+
+# ✅ Set correct permissions for SSH keys (user)
+RUN chmod 600 /home/user/.ssh/id_rsa /home/user/.ssh/authorized_keys \
+    && chown -R user:user /home/user/.ssh
+
+# ✅ Expose SSH port
+EXPOSE 22
+
+# ✅ Switch to user
+USER user
+WORKDIR /home/user
+
+# ✅ Start SSH service correctly with host key generation
+CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /shared/results && sudo chmod -R 777 /shared/results
+```
+
+- `docker-compose.yaml`
+```bash 
+version: "3.8"
+
+services:
+  master:
+    build: .
+    container_name: master
+    networks:
+      - my_network
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    ports:
+      - "2220:22"
+    volumes:
+      - shared_volume:/shared
+      - ./ssh_keys:/root/.ssh # Mount pre-generated SSH keys for passwordless access
+      - ./tests:/home/tests
+    tmpfs:
+      - /shared/results:mode=777
+
+  worker1:
+    build: .
+    container_name: worker1
+    networks:
+      - my_network
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    ports:
+      - "2221:22"
+    volumes:
+      - shared_volume:/shared
+      - ./ssh_keys:/root/.ssh
+      - ./tests:/home/tests
+    tmpfs:
+      - /shared/results:mode=777
+  worker2:
+    build: .
+    container_name: worker2
+    networks:
+      - my_network
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    ports:
+      - "2222:22"
+    volumes:
+      - shared_volume:/shared
+      - ./ssh_keys:/root/.ssh
+      - ./tests:/home/tests
+    tmpfs:
+      - /shared/results:mode=777
+
+networks:
+  my_network:
+    driver: bridge
+
+volumes:
+  shared_volume:
+    driver: local
+```
+---
+#### Starting the containers
+
+Generate SSH keys in the project's folder:
+```bash 
+mkdir -p ssh_keys
+ssh-keygen -t rsa -b 4096 -f ssh_keys/id_rsa -N ""
+```
+Verify file permissions:
+```bash 
+chmod 600 ssh_keys/id_rsa
+chmod 644 ssh_keys/id_rsa.pub
+```
+
+Now you can start the setup:
+```bash 
+docker-compose up -d
+```
+
+To confirm:
+```bash 
+docker ps
+```
+
+Try to SSH:
+- master node
+```bash 
+ssh -i ssh_keys/id_rsa -p 2220 user@localhost
+```
+- worker 1
+```bash 
+ssh -i ssh_keys/id_rsa -p 2220 user@localhost
+ssh worker1
+```
+- worker 2
+```bash 
+ssh -i ssh_keys/id_rsa -p 2220 user@localhost
+ssh worker2
+```
+>**Observation**: to stop all the containers type `docker stop $(docker ps -q)`
 
 
 

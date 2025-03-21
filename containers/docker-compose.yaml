@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  master:
+    build: .
+    container_name: master
+    networks:
+      - my_network
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    ports:
+      - "2220:22"
+    volumes:
+      - shared_volume:/shared
+      - ./ssh_keys:/root/.ssh # Mount pre-generated SSH keys for passwordless access
+      - ./tests:/home/tests
+    tmpfs:
+      - /shared/results:mode=777
+
+  worker1:
+    build: .
+    container_name: worker1
+    networks:
+      - my_network
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    ports:
+      - "2221:22"
+    volumes:
+      - shared_volume:/shared
+      - ./ssh_keys:/root/.ssh
+      - ./tests:/home/tests
+    tmpfs:
+      - /shared/results:mode=777
+  worker2:
+    build: .
+    container_name: worker2
+    networks:
+      - my_network
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    ports:
+      - "2222:22"
+    volumes:
+      - shared_volume:/shared
+      - ./ssh_keys:/root/.ssh
+      - ./tests:/home/tests
+    tmpfs:
+      - /shared/results:mode=777
+
+networks:
+  my_network:
+    driver: bridge
+
+volumes:
+  shared_volume:
+    driver: local
