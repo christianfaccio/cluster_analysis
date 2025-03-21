@@ -1,1 +1,2 @@
-containers/ssh_keys/
+containers/ssh_keys/id_rsa
+containers/ssh_keys/id_rsa.pub
