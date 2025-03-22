@@ -714,12 +714,12 @@ iozone -a -i 0 -i 1 -i 2 -f ./testfile > iozone_distrsys_output.txt
 - `-f ./testfile`: Specifies the file (`testfile`) to be used for testing, located in the current directory (which in your case would be the shared directory).
 - `iozone_distrsys_output.txt`: Redirects the output of the test to a file (`iozone_distrsys_output.txt`).
 
-![](VM/results/read_performance_plot.png)
-![](VM/results/write_performance_plot.png)
-![](VM/results/reread_performance_plot.png)
-![](VM/results/rewrite_performance_plot.png)
-![](VM/results/read.1_performance_plot.png)
-![](VM/results/write.1_performance_plot.png)
+![](VM/tests/iozone/read_performance_plot.png)
+![](VM/tests/iozone/write_performance_plot.png)
+![](VM/tests/iozone/reread_performance_plot.png)
+![](VM/tests/iozone/rewrite_performance_plot.png)
+![](VM/tests/iozone/read.1_performance_plot.png)
+![](VM/tests/iozone/write.1_performance_plot.png)
 
 ---
 
@@ -977,12 +977,12 @@ Overall, the network performs well, but optimizing retransmission rates could fu
 
 ## Disk I/O test (IOZone)
 
-![](containers/tests/results/read_performance_plot.png)
-![](containers/tests/results/write_performance_plot.png)
-![](containers/tests/results/reread_performance_plot.png)
-![](containers/tests/results/rewrite_performance_plot.png)
-![](containers/tests/results/random_read_performance_plot.png)
-![](containers/tests/results/random_write_performance_plot.png)
+![](containers/tests/iozone/read_performance_plot.png)
+![](containers/tests/iozone/write_performance_plot.png)
+![](containers/tests/iozone/reread_performance_plot.png)
+![](containers/tests/iozone/rewrite_performance_plot.png)
+![](containers/tests/iozone/random_read_performance_plot.png)
+![](containers/tests/iozone/random_write_performance_plot.png)
 
 
 
