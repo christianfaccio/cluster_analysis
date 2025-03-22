@@ -12,35 +12,35 @@ RUN apt-get update && apt-get install -y \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# ✅ Create SSH folder and set correct permissions
-RUN mkdir -p /var/run/sshd /home/user/.ssh /shared/results \
+# Create SSH folder and set correct permissions
+RUN mkdir -p /var/run/sshd /home/user/.ssh /shared \
     && chmod 700 /home/user/.ssh
 
-# ✅ Create a new user 'user' with a home directory
+# Create a new user 'user' with a home directory
 RUN useradd -m -s /bin/bash user \
     && echo "user:userpassword" | chpasswd \
     && echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# ✅ Ensure SSH is configured for user
+# Ensure SSH is configured for user
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config \
     && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config \
     && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
     && sed -i 's|#AuthorizedKeysFile.*|AuthorizedKeysFile .ssh/authorized_keys|' /etc/ssh/sshd_config
 
-# ✅ Copy SSH keys for user (passwordless login)
+# Copy SSH keys for user (passwordless login)
 COPY ssh_keys/id_rsa.pub /home/user/.ssh/authorized_keys
 COPY ssh_keys/id_rsa /home/user/.ssh/id_rsa
 
-# ✅ Set correct permissions for SSH keys (user)
+# Set correct permissions for SSH keys (user)
 RUN chmod 600 /home/user/.ssh/id_rsa /home/user/.ssh/authorized_keys \
     && chown -R user:user /home/user/.ssh
 
-# ✅ Expose SSH port
+# Expose SSH port
 EXPOSE 22
 
-# ✅ Switch to user
+# Switch to user
 USER user
 WORKDIR /home/user
 
-# ✅ Start SSH service correctly with host key generation
-CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /shared/results && sudo chmod -R 777 /shared/results
+# Start SSH service correctly with host key generation
+CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /shared && sudo chmod -R 777 /shared

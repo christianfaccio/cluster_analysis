@@ -543,6 +543,46 @@ Modify:
 
 Check https://www.advancedclustering.com/act_kb/tune-hpl-dat-file/ to use the right parameters for your cluster.
 
+For me:
+```bash 
+HPLinpack benchmark input file
+Innovative Computing Laboratory, University of Tennessee
+HPL.out      output file name (if any) 
+6            device out (6=stdout,7=stderr,file)
+1            # of problems sizes (N)
+20352         Ns
+1            # of NBs
+192           NBs
+0            PMAP process mapping (0=Row-,1=Column-major)
+1            # of process grids (P x Q)
+2            Ps
+2            Qs
+16.0         threshold
+1            # of panel fact
+2            PFACTs (0=left, 1=Crout, 2=Right)
+1            # of recursive stopping criterium
+4            NBMINs (>= 1)
+1            # of panels in recursion
+2            NDIVs
+1            # of recursive panel fact.
+1            RFACTs (0=left, 1=Crout, 2=Right)
+1            # of broadcast
+1            BCASTs (0=1rg,1=1rM,2=2rg,3=2rM,4=Lng,5=LnM)
+1            # of lookahead depth
+1            DEPTHs (>=0)
+2            SWAP (0=bin-exch,1=long,2=mix)
+64           swapping threshold
+0            L1 in (0=transposed,1=no-transposed) form
+0            U  in (0=transposed,1=no-transposed) form
+1            Equilibration (0=no,1=yes)
+8            memory alignment in double (> 0)
+##### This line (no. 32) is ignored (it serves as a separator). ######
+0                               Number of additional problem sizes for PTRANS
+1200 10000 30000                values of N
+0                               number of additional blocking sizes for PTRANS
+40 9 8 13 13 20 16 32 64        values of NB
+```
+
 Create the Hosts File on the Master Node:
 ```bash 
 vim hosts
@@ -692,48 +732,47 @@ RUN apt-get update && apt-get install -y \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# ✅ Create SSH folder and set correct permissions
-RUN mkdir -p /var/run/sshd /home/user/.ssh /shared/results \
+# Create SSH folder and set correct permissions
+RUN mkdir -p /var/run/sshd /home/user/.ssh /shared \
     && chmod 700 /home/user/.ssh
 
-# ✅ Create a new user 'user' with a home directory
+# Create a new user 'user' with a home directory
 RUN useradd -m -s /bin/bash user \
     && echo "user:userpassword" | chpasswd \
     && echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# ✅ Ensure SSH is configured for user
+# Ensure SSH is configured for user
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config \
     && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config \
     && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
     && sed -i 's|#AuthorizedKeysFile.*|AuthorizedKeysFile .ssh/authorized_keys|' /etc/ssh/sshd_config
 
-# ✅ Copy SSH keys for user (passwordless login)
+# Copy SSH keys for user (passwordless login)
 COPY ssh_keys/id_rsa.pub /home/user/.ssh/authorized_keys
 COPY ssh_keys/id_rsa /home/user/.ssh/id_rsa
 
-# ✅ Set correct permissions for SSH keys (user)
+# Set correct permissions for SSH keys (user)
 RUN chmod 600 /home/user/.ssh/id_rsa /home/user/.ssh/authorized_keys \
     && chown -R user:user /home/user/.ssh
 
-# ✅ Expose SSH port
+# Expose SSH port
 EXPOSE 22
 
-# ✅ Switch to user
+# Switch to user
 USER user
 WORKDIR /home/user
 
-# ✅ Start SSH service correctly with host key generation
-CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /shared/results && sudo chmod -R 777 /shared/results
+# Start SSH service correctly with host key generation
+CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /shared && sudo chmod -R 777 /shared
 ```
 
 - `docker-compose.yaml`
 ```bash 
-version: "3.8"
-
+v
 services:
-  master:
+  master1:
     build: .
-    container_name: master
+    container_name: master1
     networks:
       - my_network
     deploy:
@@ -746,13 +785,12 @@ services:
     volumes:
       - shared_volume:/shared
       - ./ssh_keys:/root/.ssh # Mount pre-generated SSH keys for passwordless access
-      - ./tests:/home/tests
     tmpfs:
-      - /shared/results:mode=777
+      - /shared:mode=777
 
-  worker1:
+  node1:
     build: .
-    container_name: worker1
+    container_name: node1
     networks:
       - my_network
     deploy:
@@ -765,12 +803,11 @@ services:
     volumes:
       - shared_volume:/shared
       - ./ssh_keys:/root/.ssh
-      - ./tests:/home/tests
     tmpfs:
-      - /shared/results:mode=777
-  worker2:
+      - /shared:mode=777
+  node2:
     build: .
-    container_name: worker2
+    container_name: node2
     networks:
       - my_network
     deploy:
@@ -783,9 +820,8 @@ services:
     volumes:
       - shared_volume:/shared
       - ./ssh_keys:/root/.ssh
-      - ./tests:/home/tests
     tmpfs:
-      - /shared/results:mode=777
+      - /shared:mode=777
 
 networks:
   my_network:
@@ -798,20 +834,22 @@ volumes:
 ---
 #### Starting the containers
 
-Generate SSH keys in the project's folder:
+Generate SSH keys:
 ```bash 
 mkdir -p ssh_keys
 ssh-keygen -t rsa -b 4096 -f ssh_keys/id_rsa -N ""
 ```
-Verify file permissions:
+
+Verify the permissions:
 ```bash 
 chmod 600 ssh_keys/id_rsa
 chmod 644 ssh_keys/id_rsa.pub
 ```
 
+
 Now you can start the setup:
 ```bash 
-docker-compose up -d
+docker compose up -d
 ```
 
 To confirm:
@@ -824,17 +862,26 @@ Try to SSH:
 ```bash 
 ssh -i ssh_keys/id_rsa -p 2220 user@localhost
 ```
-- worker 1
+- node 1
 ```bash 
-ssh -i ssh_keys/id_rsa -p 2220 user@localhost
-ssh worker1
+ssh -i ssh_keys/id_rsa -p 2221 user@localhost
 ```
-- worker 2
+- node 2
 ```bash 
-ssh -i ssh_keys/id_rsa -p 2220 user@localhost
-ssh worker2
+ssh -i ssh_keys/id_rsa -p 2222 user@localhost
 ```
 >**Observation**: to stop all the containers type `docker stop $(docker ps -q)`
+
+>**WARNING**: If the `man in the middle` attack occurs, just remove the old key from the `~/.ssh/known_hosts` file in your host
+
+Now the cluster should work fine and should ensure passwordless ssh connection between all nodes and between them and the host. 
+
+---
+## Measuring Performances
+
+#### HPCC
+
+
 
 
 
