@@ -1,0 +1,25 @@
+stress-ng: debug: [4563] invoked with 'stress-ng --cpu 2 --timeout 60s --verbose' by user 1001 'user'
+stress-ng: debug: [4563] stress-ng 0.17.06
+stress-ng: debug: [4563] system: Linux c576468de0cf 6.10.14-linuxkit #1 SMP Mon Feb 24 16:35:16 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [4563] RAM total: 7.7G, RAM free: 6.7G, swap free: 1024.0M
+stress-ng: debug: [4563] temporary file path: '/shared', filesystem type: tmpfs (1003203 blocks available)
+stress-ng: debug: [4563] 8 processors online, 8 processors configured
+stress-ng: info:  [4563] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [4563] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [4563] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [4563] dispatching hogs: 2 cpu
+stress-ng: debug: [4563] starting stressors
+stress-ng: debug: [4564] cpu: [4564] started (instance 0 on CPU 6)
+stress-ng: debug: [4563] 2 stressors started
+stress-ng: debug: [4565] cpu: [4565] started (instance 1 on CPU 7)
+stress-ng: debug: [4564] cpu: using method 'all'
+stress-ng: debug: [4564] cpu: [4564] exited (instance 0 on CPU 6)
+stress-ng: debug: [4563] cpu: [4564] terminated (success)
+stress-ng: debug: [4565] cpu: [4565] exited (instance 1 on CPU 7)
+stress-ng: debug: [4563] cpu: [4565] terminated (success)
+stress-ng: debug: [4563] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [4563] skipped: 0
+stress-ng: info:  [4563] passed: 2: cpu (2)
+stress-ng: info:  [4563] failed: 0
+stress-ng: info:  [4563] metrics untrustworthy: 0
+stress-ng: info:  [4563] successful run completed in 1 min, 0.02 secs

@@ -627,6 +627,17 @@ Below are the performance values for the 13 tests of the HPCC suite.
 ---
 #### Network test (Iperf3)
 
+Start the server in a VM:
+```bash 
+iperf3 -s 
+```
+
+Run iperf3 client in another VM:
+```bash 
+iperf3 -c <server-IP> 
+iperf3 -c <server-IP> -R #for reverse mode
+```
+
 | Test Scenario            | Direction         | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmissions (Retr) | Remarks                             |
 |--------------------------|-------------------|-------------------|---------------------|------------------------|-------------------------------------|
 | **Master01 - Node01**     | Forward           | 3.46 GBytes       | 2.97 Gbits/sec      | 887                    | Consistent throughput, moderate retransmissions |
@@ -876,11 +887,102 @@ ssh -i ssh_keys/id_rsa -p 2222 user@localhost
 
 Now the cluster should work fine and should ensure passwordless ssh connection between all nodes and between them and the host. 
 
+>**WARNING**: `bash: history: /home/user/.bash_history: cannot create: Permission denied`, if it occurs, just create the `.bash_history`file with this command `sudo touch /home/user/.bash_history`.
 ---
 ## Measuring Performances
 
 #### HPCC
 
+
+
+
+#### Network (Iperf3)
+
+# Network Performance Analysis
+
+## Test Results Summary
+
+| Test Scenario      | Direction  | Total Transfer | Average Bitrate | Retransmissions |
+|--------------------|------------|---------------|----------------|----------------|
+| Master1 → Node1  | Send       | 148 GBytes    | 127 Gbits/sec  | 150            |
+| Master1 ← Node1  | Receive    | 145 GBytes    | 124 Gbits/sec  | 1084           |
+| Node1 → Node2    | Send       | 147 GBytes    | 126 Gbits/sec  | 1497           |
+| Node1 ← Node2    | Receive    | 143 GBytes    | 123 Gbits/sec  | 262            |
+
+## Observations & Comments
+
+1. **High Throughput:** 
+   - The network achieves speeds above 120 Gbits/sec in all tests, indicating strong performance.
+   
+2. **Retransmissions:**
+   - The highest retransmissions were observed in the **Node1 → Node2** direction (1497), which may indicate network congestion or buffer limitations.
+   - The **Master1 ← Node1** test also had a notable number of retransmissions (1084), suggesting potential issues in the reverse traffic path.
+   
+3. **Stability:**
+   - Bitrates remained fairly stable, but there were slight fluctuations, particularly in reverse tests where the rate dropped towards the end (e.g., **Node1 ← Node2** showed a gradual decline in performance).
+   
+4. **Possible Improvements:**
+   - If high retransmissions are an issue, consider tuning TCP settings such as congestion control algorithms.
+   - Test with different buffer sizes (`-w` flag in iperf3) to see if performance changes.
+   - Monitor container networking settings to rule out resource limitations affecting network stack performance.
+
+Overall, the network performs well, but optimizing retransmission rates could further improve reliability.
+
+---
+
+## Stress_ng Test Results
+
+# CPU Stress Test Analysis
+
+## Test Summary
+
+| Parameter           | Value |
+|--------------------|------|
+| Command Executed  | `stress-ng --cpu 2 --timeout 60s --verbose` |
+| Stressors Used    | 2 CPU stressors |
+| CPU Method Used   | All |
+| Test Duration     | 60 seconds |
+| Total Processors  | 8 (configured & online) |
+| RAM Available     | 6.7 GB (Total: 7.7 GB) |
+| Swap Available    | 1 GB |
+| Cache Buffer Size | 2048 KB |
+| Failed Tests      | 0 |
+| Skipped Tests     | 0 |
+| Metrics Validity  | All metrics validated and sane |
+
+## Observations & Comments
+
+1. **CPU Load Distribution:**
+   - The stress test ran on **2 CPU cores** (CPU 6 & 7), effectively isolating the workload to specific processors.
+   - The **'all' method** was used, meaning various CPU stress algorithms were executed.
+
+2. **System Stability:**
+   - No failures or skipped tests indicate **a stable system under stress**.
+   - The metrics were validated and deemed **trustworthy**, meaning performance data is reliable.
+
+3. **Memory & Cache Handling:**
+   - The system had **sufficient free RAM (6.7 GB available)**, meaning no major memory bottlenecks occurred.
+   - The **shared cache buffer was 2048 KB**, which could be adjusted for more intensive workloads.
+
+4. **Overall Performance:**
+   - The test completed successfully in **60.02 seconds**, matching the expected runtime.
+   - If testing more extreme conditions, consider **increasing the number of CPU stressors** or testing **different stressor methods**.
+
+### Suggested Improvements
+- To fully utilize the system, **increase the number of CPU stressors** closer to the total available processors (e.g., `--cpu 8`).
+- Test with **different CPU stress methods** (e.g., `--cpu-method matrixprod`) for deeper insights.
+- Monitor system temperatures and CPU throttling effects under extended stress tests.
+
+---
+
+## Disk I/O test (IOZone)
+
+![](containers/tests/results/read_performance_plot.png)
+![](containers/tests/results/write_performance_plot.png)
+![](containers/tests/results/reread_performance_plot.png)
+![](containers/tests/results/rewrite_performance_plot.png)
+![](containers/tests/results/random_read_performance_plot.png)
+![](containers/tests/results/random_write_performance_plot.png)
 
 
 
