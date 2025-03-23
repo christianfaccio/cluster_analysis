@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     openssh-server rsync iputils-ping \
     sysbench stress-ng iozone3 iperf3 \
     netcat-openbsd wget unzip hpcc \
+    mpich vim \
     openmpi-bin openmpi-common openmpi-doc libopenmpi-dev \
     sudo \
     && rm -rf /var/lib/apt/lists/*
@@ -26,15 +27,6 @@ RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/s
     && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config \
     && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
     && sed -i 's|#AuthorizedKeysFile.*|AuthorizedKeysFile .ssh/authorized_keys|' /etc/ssh/sshd_config
-
-# Donwload and compile HPC
-RUN git clone https://github.com/icl-utk-edu/hpcc.git && \
-    cd hpcc && \
-    mv hpl/setup/Make.LinuxIntelIA64Itan2_eccMKL hpl/ && \
-    sed -i 's/-fno-alias/-fno-strict-aliasing/' hpl/Make.LinuxIntelIA64Itan2_eccMKL && \
-    sed -i 's/-mcpu=itanium2/-mtune=native/' hpl/Make.LinuxIntelIA64Itan2_eccMKL && \
-    sed -i 's|-lmkl_i2p -lpthread -lguide|-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm|' hpl/Make.LinuxIntelIA64Itan2_eccMKL && \
-    make arch=LinuxIntelIA64Itan2_eccMKL
 
 # Copy SSH keys for user (passwordless login)
 COPY ssh_keys/id_rsa.pub /home/user/.ssh/authorized_keys

@@ -663,7 +663,10 @@ The results suggest that while the network is fast, there may be occasional pack
 Test Configuration:
 - **Stress-ng Version**: 0.17.06
 - **Test Duration**: 60 seconds per stressor
-- **Test Command**: `stress-ng --cpu 2 --timeout 60s --verbose`
+- **Test Command**: 
+```bash
+mpirun --hostfile hosts -np 4 stress-ng --cpu 1 --timeout 60s --metrics-brief --verbose
+```
 - **System Information**:
   - **OS**: Ubuntu 6.8.0-55-generic
   - **Kernel**: 6.8.0-55-generic
@@ -893,14 +896,30 @@ Now the cluster should work fine and should ensure passwordless ssh connection b
 
 #### HPCC
 
+| **Test Section**            | **Result**                                                         | **Comment**                                                                                             |
+|-----------------------------|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| **MPIRandomAccess**          | 0.010 GUP/s (Billion Updates per second)                           | The MPIRandomAccess benchmark measures random updates on a distributed array using MPI. The result reflects how well parallel random updates perform. |
+| **StarRandomAccess**         | 0.074 GUP/s (Billion Updates per second)                           | StarRandomAccess tests random access with a star topology, where a central node communicates with all others, measuring efficiency in this setup. |
+| **SingleRandomAccess**       | 0.101 GUP/s                                                        | This benchmark measures random access performance on a single node without any distributed environment. It shows the efficiency of local memory access. |
+| **MPIRandomAccess_LCG**      | 0.009 GUP/s                                                        | MPIRandomAccess_LCG uses a Linear Congruential Generator for random access, testing how deterministic sequences affect performance in MPI. |
+| **StarRandomAccess_LCG**     | 0.078 GUP/s                                                        | StarRandomAccess_LCG tests random access in a star topology using an LCG sequence, assessing the impact of predictable access patterns. |
+| **SingleRandomAccess_LCG**   | 0.105 GUP/s                                                        | This is a variant of SingleRandomAccess, using an LCG sequence for random access on a single machine. It helps measure the effect of deterministic access. |
+| **PTRANS**                   | Wall time: 0.42s, CPU time: 0.29s, Residual: 0.00                  | PTRANS benchmarks matrix transposition performance, testing the efficiency and accuracy of large-scale transposition operations in memory. |
+| **StarDGEMM**                | Minimum Gflop/s: 3.94, Average: 3.95, Maximum: 3.97               | StarDGEMM benchmarks the General Matrix Multiply operation in a star topology, measuring the performance of matrix multiplication across multiple nodes. |
+| **SingleDGEMM**              | Single DGEMM Gflop/s: 5.23                                         | SingleDGEMM measures the performance of DGEMM on a single node, giving a local baseline for computationally intense tasks like matrix multiplication. |
+| **StarSTREAM**               | Copy: 21.66 GB/s, Scale: 15.12 GB/s, Add: 17.09 GB/s, Triad: 17.04 GB/s | StarSTREAM tests memory bandwidth using different memory operations (copy, scale, add, triad) in a star topology, showing how memory bandwidth scales with multiple nodes. |
+| **SingleSTREAM**             | Copy: 62.36 GB/s, Scale: 46.67 GB/s, Add: 47.68 GB/s, Triad: 47.87 GB/s | SingleSTREAM benchmarks memory bandwidth in a single node environment, helping to compare local vs. distributed memory operation performance. |
+| **MPIFFT**                   | Gflop/s: 8.43, max error: 1.89e-15                                  | MPIFFT tests the performance of Fast Fourier Transform (FFT) in MPI, measuring computational performance and accuracy in signal processing tasks. |
+| **StarFFT**                  | Average Gflop/s: 4.83, Maximum: 5.07                               | StarFFT measures the performance of FFT in a star topology, showing how the distributed system performs with parallelized signal processing operations. |
+| **SingleFFT**                | Single FFT Gflop/s: 6.29                                           | SingleFFT benchmarks FFT performance on a single node, providing a local baseline for comparing distributed FFT performance. |
+| **Latency-Bandwidth**        | Max Ping Pong Latency: 0.0033 ms, Max Ping Pong Bandwidth: 32.75 GB/s | Latency-Bandwidth tests communication latency and bandwidth using the ping pong method, providing insights into the efficiency of inter-process communication in MPI. |
+| **HPL (High-Performance Linpack)** | Parameters: N=20352, Time: 0.42s, Gflops: ~1.99                     | HPL measures high-performance computing power by solving a large linear system, with the result in Gflops indicating computational speed for large-scale tasks. |
 
-
+---
 
 #### Network (Iperf3)
 
-# Network Performance Analysis
 
-## Test Results Summary
 
 | Test Scenario      | Direction  | Total Transfer | Average Bitrate | Retransmissions |
 |--------------------|------------|---------------|----------------|----------------|
@@ -909,7 +928,7 @@ Now the cluster should work fine and should ensure passwordless ssh connection b
 | Node1 → Node2    | Send       | 147 GBytes    | 126 Gbits/sec  | 1497           |
 | Node1 ← Node2    | Receive    | 143 GBytes    | 123 Gbits/sec  | 262            |
 
-## Observations & Comments
+Observations & Comments
 
 1. **High Throughput:** 
    - The network achieves speeds above 120 Gbits/sec in all tests, indicating strong performance.
@@ -932,9 +951,6 @@ Overall, the network performs well, but optimizing retransmission rates could fu
 
 ## Stress_ng Test Results
 
-# CPU Stress Test Analysis
-
-## Test Summary
 
 | Parameter           | Value |
 |--------------------|------|
@@ -950,7 +966,7 @@ Overall, the network performs well, but optimizing retransmission rates could fu
 | Skipped Tests     | 0 |
 | Metrics Validity  | All metrics validated and sane |
 
-## Observations & Comments
+Observations & Comments
 
 1. **CPU Load Distribution:**
    - The stress test ran on **2 CPU cores** (CPU 6 & 7), effectively isolating the workload to specific processors.
@@ -968,7 +984,7 @@ Overall, the network performs well, but optimizing retransmission rates could fu
    - The test completed successfully in **60.02 seconds**, matching the expected runtime.
    - If testing more extreme conditions, consider **increasing the number of CPU stressors** or testing **different stressor methods**.
 
-### Suggested Improvements
+Suggested Improvements
 - To fully utilize the system, **increase the number of CPU stressors** closer to the total available processors (e.g., `--cpu 8`).
 - Test with **different CPU stress methods** (e.g., `--cpu-method matrixprod`) for deeper insights.
 - Monitor system temperatures and CPU throttling effects under extended stress tests.
@@ -976,6 +992,18 @@ Overall, the network performs well, but optimizing retransmission rates could fu
 ---
 
 ## Disk I/O test (IOZone)
+
+```bash
+touch /shared/testfile
+vim machines.txt
+
+Node01 /shared /usr/bin/iozone 
+Node02 /shared /usr/bin/iozone
+```
+
+```bash
+iozone -+m /shared/machines.txt -f /shared/testfile -a -R -O | tee iozone_shared_results.txt
+```
 
 ![](containers/tests/iozone/read_performance_plot.png)
 ![](containers/tests/iozone/write_performance_plot.png)

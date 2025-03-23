@@ -2,7 +2,7 @@
 services:
   master1:
     build: .
-    container_name: master1
+    container_name: master
     networks:
       - my_network
     deploy:
