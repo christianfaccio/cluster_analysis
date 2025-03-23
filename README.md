@@ -1072,6 +1072,91 @@ Comments:
 
 #### Sysbench
 
+Sysbench is a benchmarking tool used to evaluate the performance of various system components such as CPU, memory, disk I/O, and database systems. It allows for simulating different workloads and measuring system performance.
+Sysbench is widely used for performance testing and stress testing in server environments.
+
+1. Install `sysbench` on all nodes (for VM):
+```bash
+apt update && apt install -y sysbench
+```
+2. Create the usual `hosts` file (if not already created):
+```bash 
+sudo vim hosts
+
+<worker_node_IP> slots=2
+<worker_node_IP> slots=2
+```
+3. Run sysbench CPU test on master node:
+```bash
+mpirun --hostfile hosts -np 4 sysbench cpu --cpu-max-prime=20000 --time=60 run
+```
+  - `-np 4`: Runs 4 MPI processes (adjust based on cores).
+  - `--cpu-max-prime=20000`: Increases computational load.
+  - `--time=60`: Runs for 60 seconds.
+
+4. (Optional) Run Memory Test
+```bash 
+mpirun --hostfile hosts -np 4 sysbench memory --memory-block-size=1M --memory-total-size=10G run
+```
+
+My results are:
+
+- **VM**
+  The CPU test was conducted using a single thread, with the prime number limit set to 20000. The CPU speed and latency were measured across multiple runs.
+
+  Key CPU Metrics:
+  - **Events per second**: Ranges from **2151.05** to **2198.45**.
+  - **Average Latency**: Consistently around **0.46 ms**.
+  - **95th Percentile Latency**: Maintained at **1.01 ms**.
+  - **Maximum Latency**: Fluctuated between **4.53 ms** to **11.98 ms**.
+  - **Execution Time**: Stable around **60 seconds** per test.
+
+  The CPU performance shows stability with minimal fluctuations in event rates and latency. The CPU tests are consistent, with slight variations likely due to minor system load or external factors.
+
+  The memory test was conducted using a block size of **1024 KiB** and a total size of **10240 MiB**, performing a write operation across multiple runs.
+
+  Key Memory Metrics:
+  - **Operations per second**: Ranges from **18970.37** to **19327.09**.
+  - **Throughput**: Consistently around **19,170 MiB/sec**.
+  - **Average Latency**: Approximately **0.05 ms**.
+  - **Maximum Latency**: Ranges between **0.50 ms** to **1.25 ms**.
+  - **Execution Time**: Varies slightly from **0.5288 seconds** to **0.5383 seconds**.
+
+  The memory performance is stable with consistent throughput and low latency. Variations in operations per second are minor, likely due to system fluctuations, but the overall performance indicates efficient memory handling.
+
+  Both the CPU and memory tests show stable and efficient performance, with minimal variations across runs. The slight fluctuations observed are typical in benchmarking and do not indicate significant issues.
+
+- **Containers**
+  The CPU test was run using a single thread with a prime number limit of 20000. The test measured CPU speed, latency, and fairness across multiple runs.
+
+  Key CPU Metrics:
+  - **Events per second**: Ranges from **3253.57** to **3303.00**.
+  - **Average Latency**: Consistently around **0.30 ms** to **0.31 ms**.
+  - **Maximum Latency**: Fluctuates from **14.01 ms** to **70.35 ms**.
+  - **95th Percentile Latency**: Remains stable at **0.90 ms**.
+  - **Execution Time**: Stable at **60 seconds** with minimal deviation.
+
+  The CPU tests show good stability overall, with some variability in maximum latency, likely due to system fluctuations or load. The consistent average latency suggests that the CPU is performing well under load.
+
+  The memory test was performed using a block size of **1024 KiB** and a total size of **10240 MiB** with write operations.
+
+  Key Memory Metrics:
+  - **Operations per second**: Ranges from **39689.67** to **41471.36**.
+  - **Throughput**: Ranges from **38,883.73 MiB/sec** to **41,471.36 MiB/sec**.
+  - **Average Latency**: Consistently low, ranging from **0.02 ms** to **0.03 ms**.
+  - **Maximum Latency**: Fluctuates between **0.14 ms** and **0.17 ms**.
+  - **95th Percentile Latency**: Ranges from **0.03 ms** to **0.05 ms**.
+  - **Execution Time**: Between **0.2464 seconds** and **0.2628 seconds**.
+
+  The memory tests show excellent performance with high throughput and low latency. The minor fluctuations in maximum latency do not significantly impact overall performance, indicating efficient memory handling.
+
+  Both CPU and memory tests show stable and efficient performance. The CPU test exhibits occasional high latency spikes, but the average and 95th percentile latencies are consistent, reflecting reliable CPU performance. The memory test shows outstanding throughput with minimal latency, indicating that memory operations are highly optimized.
+
+
+
+
+
+
 ---
 
 #### Disk I/O test (IOZone)
