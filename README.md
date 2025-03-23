@@ -535,34 +535,6 @@ sudo mount -a
 
 ---
 
-
----
-
-#### Disk I/O (IOZone)
-
-```bash
-iozone -a -i 0 -i 1 -i 2 -f ./testfile > iozone_distrsys_output.txt
-```
-
-**Purpose**: Evaluates disk I/O performance using `iozone`.
-
-- `-a`: This option tells iozone to perform a set of automatic tests (all tests for performance).
-- `-i 0 -i 1 -i 2`: These options specify the types of tests to run:
-    - `-i 0`: Sequential write test
-    - `-i 1`: Sequential read test
-    - `-i 2`: Random read/write test
-- `-f ./testfile`: Specifies the file (`testfile`) to be used for testing, located in the current directory (which in your case would be the shared directory).
-- `iozone_distrsys_output.txt`: Redirects the output of the test to a file (`iozone_distrsys_output.txt`).
-
-![](VM/tests/iozone/read_performance_plot.png)
-![](VM/tests/iozone/write_performance_plot.png)
-![](VM/tests/iozone/reread_performance_plot.png)
-![](VM/tests/iozone/rewrite_performance_plot.png)
-![](VM/tests/iozone/read.1_performance_plot.png)
-![](VM/tests/iozone/write.1_performance_plot.png)
-
----
-
 ## Containers' Cluster
 
 ### Configuring the files
@@ -1193,26 +1165,90 @@ My results are:
 
 #### Disk I/O test (IOZone)
 
+**IOzone** is a benchmark tool used to evaluate file system performance by testing various I/O operations. It provides insights into how well a file system handles different types of workloads, helping with performance optimization and hardware comparisons.
+Key Features:
+- **File Operations Tested**:
+  - **Write, Read, Re-write**: Measures basic read/write operations.
+  - **Random Read/Write**: Tests performance for random access patterns.
+  - **Sequential Read/Write**: Assesses sequential data access efficiency.
+  - **Create/Append, Delete**: Evaluates file creation, appending, and deletion.
 
+Use Cases:
+- **File System Tuning**: Optimize configurations for better performance.
+- **Hardware Comparison**: Compare storage devices (SSD vs. HDD).
+- **Bottleneck Identification**: Detect performance bottlenecks in storage subsystems.
 
-```bash
-touch /shared/testfile
-vim machines.txt
-
-Node01 /shared /usr/bin/iozone 
-Node02 /shared /usr/bin/iozone
+Install it in each node (if using VMs):
+```bash 
+sudo apt update & sudo apt install iozone3
 ```
+To run the tests, do the following:
+```bash
+touch /shared/testfile #used for testing
+vim machines.txt #contains the following lines
 
+node1 /shared /usr/bin/iozone 
+node2 /shared /usr/bin/iozone
+```
+Then run it to test the distributed filesystem:
 ```bash
 iozone -+m /shared/machines.txt -f /shared/testfile -a -R -O | tee iozone_shared_results.txt
 ```
+It will save the results in the `iozone_shared_results` file. 
 
-![](containers/tests/iozone/read_performance_plot.png)
-![](containers/tests/iozone/write_performance_plot.png)
-![](containers/tests/iozone/reread_performance_plot.png)
-![](containers/tests/iozone/rewrite_performance_plot.png)
-![](containers/tests/iozone/random_read_performance_plot.png)
-![](containers/tests/iozone/random_write_performance_plot.png)
+If you just want to test on a single node, type:
+´´´bash 
+iozone -a
+```
+
+My results for the **distributed system** are:
+- **VM**
+  ![](VM/tests/iozone/results/write.png)
+  ![](VM/tests/iozone/results/rewrite.png)
+  ![](VM/tests/iozone/results/randwrite.png)
+  ![](VM/tests/iozone/results/read.png)
+  ![](VM/tests/iozone/results/reread.png)
+  ![](VM/tests/iozone/results/randread.png)
+
+
+- **Containers**
+  ![](containers/tests/iozone/results/write.png)
+  ![](containers/tests/iozone/results/rewrite.png)
+  ![](containers/tests/iozone/results/randwrite.png)
+  ![](containers/tests/iozone/results/read.png)
+  ![](containers/tests/iozone/results/reread.png)
+  ![](containers/tests/iozone/results/randread.png)
+
+- **Comparison**
+
+  1. **Performance Variability**:
+    - Both VMs and containers show significant variability in performance depending on the operation (e.g., read, write, rewrite) and record length.
+    - Containers generally outperform VMs in most operations, especially for smaller record lengths (e.g., 4 kB, 8 kB).
+
+  2. **Write Operations**:
+    - Containers consistently achieve higher write and rewrite throughput compared to VMs. For example:
+      - At 64 kB record length, containers achieve ~334,198 kB/s for write, while VMs achieve ~665,724 kB/s.
+      - This trend holds across most record lengths, indicating better I/O optimization in containerized environments.
+
+  3. **Read Operations**:
+    - Containers also show superior read and reread performance, particularly for smaller record lengths. For example:
+      - At 64 kB record length, containers achieve ~3,225,504 kB/s for read, while VMs achieve ~1,311,216 kB/s.
+      - This suggests that containers handle sequential and random reads more efficiently than VMs.
+
+  4. **Random and Stride Operations**:
+    - Containers outperform VMs in random and stride operations, which are critical for real-world workloads involving non-sequential access patterns.
+    - For example, at 128 kB record length, containers achieve ~840,903 kB/s for random write, while VMs achieve ~275,255 kB/s.
+
+  5. **Larger Record Lengths**:
+    - As record lengths increase (e.g., 1024 kB, 2048 kB), the performance gap between VMs and containers narrows. Both environments show similar performance for very large record lengths, indicating that the overhead of virtualization or containerization becomes less significant for bulk data transfers.
+  
+- **Conclusion**
+  - **Containers** are better suited for I/O-intensive workloads, especially those involving small to medium record lengths and random access patterns. They offer superior performance, lower overhead, and better scalability compared to VMs.
+  - **VMs** provide stronger isolation and security but at the cost of higher overhead and reduced I/O performance. They may still be preferable for workloads requiring strict isolation or compatibility with legacy systems.
+
+
+
+
 
 
 
