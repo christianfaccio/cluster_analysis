@@ -894,27 +894,39 @@ Below are the performance values for the 13 tests of the HPCC suite.
 | **MPIRandomAccess_LCG** | GUP/s | 0.0032 | 0.009 | MPIRandomAccess_LCG uses a Linear Congruential Generator for random access, testing how deterministic sequences affect performance in MPI. |
 | **StarRandomAccess_LCG** | GUP/s | 0.067 | 0.078 | StarRandomAccess_LCG tests random access in a star topology using an LCG sequence, assessing the impact of predictable access patterns. |
 | **SingleRandomAccess_LCG** | GUP/s | 0.086 | 0.105 | This is a variant of SingleRandomAccess, using an LCG sequence for random access on a single machine. It helps measure the effect of deterministic access. |
-| **PTRANS** | Wall time / CPU time | Wall: 0.550, CPU: 4.273 | Wall time: 0.42s, CPU time: 0.29s, Residual: 0.00 | PTRANS benchmarks matrix transposition performance, testing the efficiency and accuracy of large-scale transposition operations in memory. |
-| **StarDGEMM** | Gflop/s | 2.909 | Min: 3.94, Avg: 3.95, Max: 3.97 | StarDGEMM benchmarks the General Matrix Multiply operation in a star topology, measuring the performance of matrix multiplication across multiple nodes. |
+| **PTRANS** | s | Wall: 0.550, CPU: 4.273 | Wall: 0.42s, CPU: 0.29s| PTRANS benchmarks matrix transposition performance, testing the efficiency and accuracy of large-scale transposition operations in memory. |
+| **StarDGEMM** | Gflop/s | 2.909 | 3.95 | StarDGEMM benchmarks the General Matrix Multiply operation in a star topology, measuring the performance of matrix multiplication across multiple nodes. |
 | **SingleDGEMM** | Gflop/s | 4.34 | 5.23 | SingleDGEMM measures the performance of DGEMM on a single node, giving a local baseline for computationally intense tasks like matrix multiplication. |
 | **StarSTREAM Copy** | GB/s | 23.20 | 21.66 | StarSTREAM tests memory bandwidth using different memory operations (copy, scale, add, triad) in a star topology, showing how memory bandwidth scales with multiple nodes. |
 | **SingleSTREAM Copy** | GB/s | 41.50 | 62.36 | SingleSTREAM benchmarks memory bandwidth in a single node environment, helping to compare local vs. distributed memory operation performance. |
-| **MPIFFT** | Gflop/s | 2.133 | 8.43, max error: 1.89e-15 | MPIFFT tests the performance of Fast Fourier Transform (FFT) in MPI, measuring computational performance and accuracy in signal processing tasks. |
-| **StarFFT** | Gflop/s | 3.44 | Avg: 4.83, Max: 5.07 | StarFFT measures the performance of FFT in a star topology, showing how the distributed system performs with parallelized signal processing operations. |
+| **MPIFFT** | Gflop/s | 2.133 | 8.43 | MPIFFT tests the performance of Fast Fourier Transform (FFT) in MPI, measuring computational performance and accuracy in signal processing tasks. |
+| **StarFFT** | Gflop/s | 3.44 | 4.83 | StarFFT measures the performance of FFT in a star topology, showing how the distributed system performs with parallelized signal processing operations. |
 | **SingleFFT** | Gflop/s | 4.07 | 6.29 | SingleFFT benchmarks FFT performance on a single node, providing a local baseline for comparing distributed FFT performance. |
-| **Min-Max Latency** | ms | 0.000628-0.166512 | Max Ping Pong Latency: 0.0033 | Latency-Bandwidth tests communication latency and bandwidth using the ping pong method, providing insights into the efficiency of inter-process communication in MPI. |
-| **Min-Max Ping Pong Bandwidth** | GB/s | 194.301-27467.623 | Max Ping Pong Bandwidth: 32.75 | The benchmark measures inter-node communication performance, showing how bandwidth scales with message sizes and network efficiency. |
-| **HPL** | Gflop/s | 10.64 | Parameters: N=20352, Time: 0.42s, Gflops: ~1.99 | HPL measures high-performance computing power by solving a large linear system, with the result in Gflops indicating computational speed for large-scale tasks. | 
+| **Avg. Ping Pong Latency** | ms | 0.098786 | 0.002310 | Latency-Bandwidth tests communication latency and bandwidth using the ping pong method, providing insights into the efficiency of inter-process communication in MPI. |
+| **Avg. Ping Pong Bandwidth** | GB/s | 4.756 | 17.148 | The benchmark measures inter-node communication performance, showing how bandwidth scales with message sizes and network efficiency. |
+| **HPL** | Gflop/s | 10.64 | 12.32 | HPL measures high-performance computing power by solving a large linear system, with the result in Gflops indicating computational speed for large-scale tasks. | 
 
 The HPCC benchmark suite was executed in two different environments: **virtual machines (VMs) and containers**. The results indicate that **containers generally outperform VMs across most tests**, highlighting their efficiency in computational and memory-intensive operations.   
 
-- **Random Access Performance:** Containers showed **notable improvements** in all random access tests (*MPIRandomAccess, StarRandomAccess, SingleRandomAccess,* and their *LCG* variants), indicating better memory access efficiency.  
-- **Matrix Operations:** In **DGEMM** and **PTRANS**, containers consistently achieved **higher performance**, showcasing better computational efficiency for linear algebra operations.  
-- **Memory Bandwidth:** While **StarSTREAM Copy** had slightly lower performance in containers, **SingleSTREAM Copy** showed a **significant increase**, suggesting enhanced memory bandwidth in single-node operations.  
-- **FFT Performance:** **MPIFFT, StarFFT, and SingleFFT** demonstrated **stronger performance in containers**, implying optimized floating-point computation.  
-- **Latency & Bandwidth:** Containers had **lower latency and higher bandwidth**, reinforcing their suitability for high-speed inter-node communication.  
-- **HPL Benchmark:** Surprisingly, VMs outperformed containers in **High-Performance Linpack (HPL)**, indicating potential computational overhead or resource contention in the containerized setup.  
+1. **Ping Pong Latency**:
+   - The **Avg. Ping Pong Latency** for containers is significantly lower (0.002310 ms) compared to VMs (0.098786 ms). This indicates that containers have a much faster inter-process communication, which is crucial for distributed applications where low latency is important.
+   - The lower latency in containers suggests reduced overhead, as containers share the host OS kernel, avoiding the virtualization overhead associated with VMs.
 
+2. **Ping Pong Bandwidth**:
+   - The **Avg. Ping Pong Bandwidth** is significantly better in containers (17.148 GB/s) compared to VMs (4.756 GB/s). This shows that containers can handle higher bandwidth between nodes, making them more efficient for communication-heavy tasks.
+   - Containers benefit from more direct access to the host system's network resources, whereas VMs are limited by the overhead introduced by the hypervisor and virtualized network interfaces.
+
+3. **Performance Impact**:
+   - The results suggest that containers offer better performance in terms of both latency and bandwidth due to their lighter-weight nature. VMs, on the other hand, incur more overhead due to the need for a hypervisor layer, which can reduce communication efficiency.
+   - For high-performance applications that require frequent and fast communication (e.g., MPI-based tasks, network-heavy computations), containers appear to be a better choice compared to VMs.
+
+4. **Efficiency**:
+   - Containers have less overhead in terms of system resources compared to VMs, as containers do not require a full operating system for each instance. This leads to better resource utilization, lower latency, and higher throughput in many cases.
+   - VMs provide stronger isolation and may be necessary when strong separation between tasks or services is required, but for tasks where performance is the priority, containers are more efficient.
+
+Conclusion:
+   - **Containers** outperform **VMs** in terms of communication latency and bandwidth, making them a better choice for distributed applications and tasks that involve heavy inter-process communication.
+   - **VMs** may still be preferred in environments where stronger isolation between processes or security is needed, but for performance-sensitive tasks, containers offer a more efficient solution.
 **Conclusion**  
 
 Overall, containers provide a **more efficient execution environment** for most HPCC workloads, especially in **memory access, computational efficiency, and communication latency**, making them a compelling choice for HPC workloads.
@@ -940,6 +952,11 @@ This helps simulate different network conditions.
   - **Congestion control details** 
 
 iPerf3 is widely used in networking to analyze **link capacity, detect bottlenecks, and compare performance** across different network configurations.
+
+Install `iperf3` (if using VMs):
+```bash 
+sudo apt update && sudo apt install iperf3
+```
 
 
 To run it, start the server in a node using the command `iperf3 -s`. Then, run iperf3 client in another node using the command `iperf3 -c <server_IP>`.
@@ -1023,8 +1040,12 @@ Features:
 
 You can run stress tests with different parameters based on what component you want to test. Here are some examples:
 
+Install `stress_ng` (if using VMs):
+```bash 
+sudo apt update  && sudo apt install stress_ng
+```
 
-To run it, create the usual `hosts` file as before and then run:
+To run the test, create the usual `hosts` file as before and then run:
 ```bash
 mpirun --hostfile hosts -np 4 stress-ng --cpu 1 --timeout 60s --metrics-brief --verbose
 ```
@@ -1171,6 +1192,8 @@ My results are:
 ---
 
 #### Disk I/O test (IOZone)
+
+
 
 ```bash
 touch /shared/testfile
