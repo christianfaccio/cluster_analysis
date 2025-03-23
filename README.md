@@ -1163,7 +1163,7 @@ My results are:
 
 ---
 
-#### Disk I/O test (IOZone)
+#### Disk I/O (IOZone)
 
 **IOzone** is a benchmark tool used to evaluate file system performance by testing various I/O operations. It provides insights into how well a file system handles different types of workloads, helping with performance optimization and hardware comparisons.
 Key Features:
@@ -1197,7 +1197,7 @@ iozone -+m /shared/machines.txt -f /shared/testfile -a -R -O | tee iozone_shared
 It will save the results in the `iozone_shared_results` file. 
 
 If you just want to test on a single node, type:
-´´´bash 
+```bash
 iozone -a
 ```
 
