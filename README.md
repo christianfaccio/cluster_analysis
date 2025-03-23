@@ -1149,7 +1149,7 @@ My results are:
   The memory test was performed using a block size of **1024 KiB** and a total size of **10240 MiB** with write operations.
 
   Key Memory Metrics:
- | Metric                     | Minimum Value   | Maximum Value   |
+  | Metric                     | Minimum Value   | Maximum Value   |
   |----------------------------|-----------------|-----------------|
   | **Operations per second**   | 39,689.67       | 41,471.36       |
   | **Throughput (MiB/sec)**    | 38,883.73       | 41,471.36       |
