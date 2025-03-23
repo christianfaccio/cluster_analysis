@@ -1105,22 +1105,27 @@ My results are:
   The CPU test was conducted using a single thread, with the prime number limit set to 20000. The CPU speed and latency were measured across multiple runs.
 
   Key CPU Metrics:
-  - **Events per second**: Ranges from **2151.05** to **2198.45**.
-  - **Average Latency**: Consistently around **0.46 ms**.
-  - **95th Percentile Latency**: Maintained at **1.01 ms**.
-  - **Maximum Latency**: Fluctuated between **4.53 ms** to **11.98 ms**.
-  - **Execution Time**: Stable around **60 seconds** per test.
+  | Metric                     | Minimum Value   | Maximum Value   |
+  |----------------------------|-----------------|-----------------|
+  | **Events per second**       | 2,151.05        | 2,198.45        |
+  | **Average Latency (ms)**    | 0.46            | 0.46            |
+  | **95th Percentile Latency (ms)** | 1.01        | 1.01            |
+  | **Maximum Latency (ms)**    | 4.53            | 11.98           |
+  | **Execution Time (seconds)** | 60.0002         | 60.0004         |
 
   The CPU performance shows stability with minimal fluctuations in event rates and latency. The CPU tests are consistent, with slight variations likely due to minor system load or external factors.
 
   The memory test was conducted using a block size of **1024 KiB** and a total size of **10240 MiB**, performing a write operation across multiple runs.
 
   Key Memory Metrics:
-  - **Operations per second**: Ranges from **18970.37** to **19327.09**.
-  - **Throughput**: Consistently around **19,170 MiB/sec**.
-  - **Average Latency**: Approximately **0.05 ms**.
-  - **Maximum Latency**: Ranges between **0.50 ms** to **1.25 ms**.
-  - **Execution Time**: Varies slightly from **0.5288 seconds** to **0.5383 seconds**.
+  | Metric                     | Minimum Value   | Maximum Value   |
+  |----------------------------|-----------------|-----------------|
+  | **Operations per second**   | 18,970.37       | 19,327.09       |
+  | **Throughput (MiB/sec)**    | 19,170.00       | 19,170.00       |
+  | **Average Latency (ms)**    | 0.05            | 0.05            |
+  | **Maximum Latency (ms)**    | 0.50            | 1.25            |
+  | **Execution Time (seconds)** | 0.5288          | 0.5383          |
+
 
   The memory performance is stable with consistent throughput and low latency. Variations in operations per second are minor, likely due to system fluctuations, but the overall performance indicates efficient memory handling.
 
@@ -1130,23 +1135,29 @@ My results are:
   The CPU test was run using a single thread with a prime number limit of 20000. The test measured CPU speed, latency, and fairness across multiple runs.
 
   Key CPU Metrics:
-  - **Events per second**: Ranges from **3253.57** to **3303.00**.
-  - **Average Latency**: Consistently around **0.30 ms** to **0.31 ms**.
-  - **Maximum Latency**: Fluctuates from **14.01 ms** to **70.35 ms**.
-  - **95th Percentile Latency**: Remains stable at **0.90 ms**.
-  - **Execution Time**: Stable at **60 seconds** with minimal deviation.
+  | Metric                     | Minimum Value   | Maximum Value   |
+  |----------------------------|-----------------|-----------------|
+  | **Events per second**       | 3,253.57        | 3,303.00        |
+  | **Average Latency (ms)**    | 0.30            | 0.31            |
+  | **Maximum Latency (ms)**    | 14.01           | 70.35           |
+  | **95th Percentile Latency (ms)** | 0.90        | 0.90            |
+  | **Execution Time (seconds)** | 60.0002         | 60.0003         |
+
 
   The CPU tests show good stability overall, with some variability in maximum latency, likely due to system fluctuations or load. The consistent average latency suggests that the CPU is performing well under load.
 
   The memory test was performed using a block size of **1024 KiB** and a total size of **10240 MiB** with write operations.
 
   Key Memory Metrics:
-  - **Operations per second**: Ranges from **39689.67** to **41471.36**.
-  - **Throughput**: Ranges from **38,883.73 MiB/sec** to **41,471.36 MiB/sec**.
-  - **Average Latency**: Consistently low, ranging from **0.02 ms** to **0.03 ms**.
-  - **Maximum Latency**: Fluctuates between **0.14 ms** and **0.17 ms**.
-  - **95th Percentile Latency**: Ranges from **0.03 ms** to **0.05 ms**.
-  - **Execution Time**: Between **0.2464 seconds** and **0.2628 seconds**.
+ | Metric                     | Minimum Value   | Maximum Value   |
+  |----------------------------|-----------------|-----------------|
+  | **Operations per second**   | 39,689.67       | 41,471.36       |
+  | **Throughput (MiB/sec)**    | 38,883.73       | 41,471.36       |
+  | **Average Latency (ms)**    | 0.02            | 0.03            |
+  | **Maximum Latency (ms)**    | 0.14            | 0.17            |
+  | **95th Percentile Latency (ms)** | 0.03        | 0.05            |
+  | **Execution Time (seconds)** | 0.2464          | 0.2628          |
+
 
   The memory tests show excellent performance with high throughput and low latency. The minor fluctuations in maximum latency do not significantly impact overall performance, indicating efficient memory handling.
 
