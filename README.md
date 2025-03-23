@@ -535,147 +535,6 @@ sudo mount -a
 
 ---
 
-## Measuring Performances
-
-#### HPCC
-
-1. Install HPCC on every node
-```bash
-sudo apt update
-sudo apt install -y hpcc
-```
-
-2. Install OpenMPI on every node:
-```bash 
-sudo apt install -y openmpi-bin libopenmpi-dev
-```
-
->**Warning**: ensure there is a passwordless ssh connection between master and working nodes
-
-3. On the master node, generate the HPCC configuration file:
-```bash 
-vim hpccinf.txt
-```
-Modify:
-- **Processor Count**: Set the total number of CPU cores in the cluster.
-- **Memory Size**: Adjust based on available RAM.
-- **MPI Settings**: Ensure correct paths.
-
-Check https://www.advancedclustering.com/act_kb/tune-hpl-dat-file/ to use the right parameters for your cluster.
-
-For me:
-```bash 
-HPLinpack benchmark input file
-Innovative Computing Laboratory, University of Tennessee
-HPL.out      output file name (if any) 
-6            device out (6=stdout,7=stderr,file)
-1            # of problems sizes (N)
-20352         Ns
-1            # of NBs
-192           NBs
-0            PMAP process mapping (0=Row-,1=Column-major)
-1            # of process grids (P x Q)
-2            Ps
-2            Qs
-16.0         threshold
-1            # of panel fact
-2            PFACTs (0=left, 1=Crout, 2=Right)
-1            # of recursive stopping criterium
-4            NBMINs (>= 1)
-1            # of panels in recursion
-2            NDIVs
-1            # of recursive panel fact.
-1            RFACTs (0=left, 1=Crout, 2=Right)
-1            # of broadcast
-1            BCASTs (0=1rg,1=1rM,2=2rg,3=2rM,4=Lng,5=LnM)
-1            # of lookahead depth
-1            DEPTHs (>=0)
-2            SWAP (0=bin-exch,1=long,2=mix)
-64           swapping threshold
-0            L1 in (0=transposed,1=no-transposed) form
-0            U  in (0=transposed,1=no-transposed) form
-1            Equilibration (0=no,1=yes)
-8            memory alignment in double (> 0)
-##### This line (no. 32) is ignored (it serves as a separator). ######
-0                               Number of additional problem sizes for PTRANS
-1200 10000 30000                values of N
-0                               number of additional blocking sizes for PTRANS
-40 9 8 13 13 20 16 32 64        values of NB
-```
-
-Create the Hosts File on the Master Node:
-```bash 
-vim hosts
-```
-
-and add the following lines:
-```bash
-<worker_node_1_IP> slots=<n_cores_worker_1>
-<worker_node_2_IP> slots=<n_cores_worker_2>
-```
-
-4. Run HPCC with the correct path:
-```bash 
-mpirun -np 4 -hostfile hosts hpcc
-```
-This will run the HPCC tests on the working nodes. To see results open the `hpccoutf.txt` file. 
-
->**WARNING**: SSH connection MUST be passwordless between all the nodes, otherwise you will get an error
-
->**TIP**: The files `hosts` and `hpccinf.txt` created before can be put in the distributed system between all the nodes, this way it is simpler to give the right permissions to the nodes to read the files. 
-
-Below are the performance values for the 13 tests of the HPCC suite.
-
-| Test | Value | Comment |
-|----------|----------|----------|
-| MPI Random Access (GUP/s)   | 0.0033   | The random memory access speed is very low (only 0.00334 GUP/s), indicating that the system's memory bandwidth and latency are major bottlenecks. |
-| Star Random Access (GUP/s)   | 0.0687   | StarRandomAccess is ~20x faster (0.0687 GUP/s vs. 0.00334 GUP/s). This suggests that memory access patterns in StarRandomAccess are more cache-friendly, while MPIRandomAccess suffers from higher memory latency.|
-| Single Random Access (GUP/s) | 0.0921 | Higher GUP/s than StarRandomAccess (0.0687 GUP/s) and MPIRandomAccess (0.00334 GUP/s). Since only one node was tested, the memory contention across multiple nodes didn't affect performance. |
-| PTRANS (GB/s) | Wall: 0.550, CPU: 4.273 | Wall-time bandwidth (0.550 GB/s) is much lower than CPU bandwidth (up to 4.273 GB/s), suggesting MPI communication overhead is a bottleneck and memory access patterns might be inefficient across nodes. |
-| StarDGEMM (avg. GFLOP/s) | 2.909 | Stable performance across runs (only a small difference between min/max GFLOP/s). No numerical errors, meaning the computation is accurate. Performance is limited (DGEMM is usually memory-bandwidth bound on small clusters).|
-| SingleDGEMM (GFLOP/s) | 4.34 | SingleDGEMM (4.34 GFLOP/s) is ~49% faster than StarDGEMM (2.91 GFLOP/s avg). Better performance in single-node test suggests that multi-node communication overhead or memory bottlenecks are affecting StarDGEMM. |
-| StarSTREAM Copy (GB/s) | 23.20 | Best, average, and worst times for each operation are consistent, indicating stable performance across multiple tests. Copy operation has the highest bandwidth (23.20 GB/s), which is expected as it is the simplest operation and often reveals the system’s raw memory bandwidth. The system is performing well for these memory-bound operations, and the performance is stable with no errors detected.
-| SingleSTREAM Copy (GB/s) | 41.50 | Single-node performance is significantly better than the multi-node performance from the StarSTREAM test. Copy performance is 41.50 GB/s on Node 2, much higher than the 23.20 GB/s from StarSTREAM across multiple nodes. |
-| MPIFFT (Gflop/s) | 2.133 | The Gflop/s rate (2.133 Gflop/s) is relatively low for an FFT, suggesting that memory bandwidth or computational overhead is limiting the performance. Very small error (1.894e-15) indicates high accuracy, meaning the results are highly reliable. |
-| StarFFT (Gflop/s) | 3.44 | The StarFFT performance is better compared to the MPIFFT test with a higher Gflop/s rate (average 3.44 Gflop/s). This suggests that multi-node communication or load balancing may be improving efficiency. The error is negligible (2.061e-15), indicating that the test passed with high accuracy. |
-| SingleFFT (Gflop/s) | 4.07 | 4.07 Gflop/s is a solid result for a single node, showing efficient performance for FFT calculations on Node 1. No errors detected, indicating high accuracy and correctness. |
-| Min-Max Latency (ms) | 0.000628-0.166512 | The benchmark demonstrates very low latency for communication, especially for small messages, as indicated by the min latency (0.000628 ms). |
-| Min-Max Ping Pong Bandwidth (MB/s) | 194.301-27467.623 | The bandwidth with smaller messages (like 8 bytes) is limited, but the system still maintains a relatively low latency, indicating good responsiveness for small data transfers. For larger message sizes (2MB), the system provides strong bandwidth performance, particularly with naturally ordered communication. |
-| HPL (Gflop/s) | 10.64 | The system performed very well in the HPL benchmark, with both good performance and accuracy, confirming its strength in solving large-scale linear systems. |
-
-
----
-#### Network (Iperf3)
-
-Start the server in a VM:
-```bash 
-iperf3 -s 
-```
-
-Run iperf3 client in another VM:
-```bash 
-iperf3 -c <server-IP> 
-iperf3 -c <server-IP> -R #for reverse mode
-```
-
-| Test Scenario            | Direction         | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmissions (Retr) | Remarks                             |
-|--------------------------|-------------------|-------------------|---------------------|------------------------|-------------------------------------|
-| **Master01 - Node01**     | Forward           | 3.46 GBytes       | 2.97 Gbits/sec      | 887                    | Consistent throughput, moderate retransmissions |
-| **Master01 - Node01**     | Reverse           | 3.71 GBytes       | 3.18 Gbits/sec      | 744                    | Slightly better performance in reverse direction |
-| **Node01 - Node02**       | Forward           | 3.45 GBytes       | 2.96 Gbits/sec      | 270                    | Slightly lower performance, fewer retransmissions |
-| **Node01 - Node02**       | Reverse           | 3.31 GBytes       | 2.84 Gbits/sec      | 45                     | Stable performance with minimal retransmissions |
-
-Key Observations:
-- The network throughput ranged between **2.84 Gbits/sec** and **3.18 Gbits/sec** across the various test directions, showing a high-performance network.
-- **Retransmissions** were moderate, with **Master01 - Node01** showing the highest count, which suggests some potential for packet loss or network congestion in the forward direction.
-- The reverse direction tests generally performed better in terms of throughput, indicating that the reverse path might be less congested or optimized.
-- **Node01 - Node02** had fewer retransmissions, suggesting better stability, even though the throughput was slightly lower than the other tests.
-
-Conclusion:
-Overall, the network between the nodes is performing well with high throughput. However, there are some fluctuations in performance, likely caused by network conditions such as congestion, load, or routing differences, which are most noticeable in the forward direction from **Master01 to Node01**. 
-
-The results suggest that while the network is fast, there may be occasional packet loss or congestion that can be improved for optimal performance.
-
 ---
 
 #### Stress-ng 
@@ -762,6 +621,7 @@ RUN apt-get update && apt-get install -y \
     openssh-server rsync iputils-ping \
     sysbench stress-ng iozone3 iperf3 \
     netcat-openbsd wget unzip hpcc \
+    mpich vim \
     openmpi-bin openmpi-common openmpi-doc libopenmpi-dev \
     sudo \
     && rm -rf /var/lib/apt/lists/*
@@ -802,11 +662,11 @@ CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /
 
 - `docker-compose.yaml`
 ```bash 
-v
+
 services:
   master1:
     build: .
-    container_name: master1
+    container_name: master
     networks:
       - my_network
     deploy:
@@ -868,7 +728,7 @@ volumes:
 ---
 ### Starting the containers
 
-Generate SSH keys:
+Generate SSH keys on your host in the project folder:
 ```bash 
 mkdir -p ssh_keys
 ssh-keygen -t rsa -b 4096 -f ssh_keys/id_rsa -N ""
@@ -916,61 +776,302 @@ Now the cluster should work fine and should ensure passwordless ssh connection b
 
 #### HPCC
 
-| **Test Section**            | **Result**                                                         | **Comment**                                                                                             |
-|-----------------------------|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| **MPIRandomAccess**          | 0.010 GUP/s (Billion Updates per second)                           | The MPIRandomAccess benchmark measures random updates on a distributed array using MPI. The result reflects how well parallel random updates perform. |
-| **StarRandomAccess**         | 0.074 GUP/s (Billion Updates per second)                           | StarRandomAccess tests random access with a star topology, where a central node communicates with all others, measuring efficiency in this setup. |
-| **SingleRandomAccess**       | 0.101 GUP/s                                                        | This benchmark measures random access performance on a single node without any distributed environment. It shows the efficiency of local memory access. |
-| **MPIRandomAccess_LCG**      | 0.009 GUP/s                                                        | MPIRandomAccess_LCG uses a Linear Congruential Generator for random access, testing how deterministic sequences affect performance in MPI. |
-| **StarRandomAccess_LCG**     | 0.078 GUP/s                                                        | StarRandomAccess_LCG tests random access in a star topology using an LCG sequence, assessing the impact of predictable access patterns. |
-| **SingleRandomAccess_LCG**   | 0.105 GUP/s                                                        | This is a variant of SingleRandomAccess, using an LCG sequence for random access on a single machine. It helps measure the effect of deterministic access. |
-| **PTRANS**                   | Wall time: 0.42s, CPU time: 0.29s, Residual: 0.00                  | PTRANS benchmarks matrix transposition performance, testing the efficiency and accuracy of large-scale transposition operations in memory. |
-| **StarDGEMM**                | Minimum Gflop/s: 3.94, Average: 3.95, Maximum: 3.97               | StarDGEMM benchmarks the General Matrix Multiply operation in a star topology, measuring the performance of matrix multiplication across multiple nodes. |
-| **SingleDGEMM**              | Single DGEMM Gflop/s: 5.23                                         | SingleDGEMM measures the performance of DGEMM on a single node, giving a local baseline for computationally intense tasks like matrix multiplication. |
-| **StarSTREAM**               | Copy: 21.66 GB/s, Scale: 15.12 GB/s, Add: 17.09 GB/s, Triad: 17.04 GB/s | StarSTREAM tests memory bandwidth using different memory operations (copy, scale, add, triad) in a star topology, showing how memory bandwidth scales with multiple nodes. |
-| **SingleSTREAM**             | Copy: 62.36 GB/s, Scale: 46.67 GB/s, Add: 47.68 GB/s, Triad: 47.87 GB/s | SingleSTREAM benchmarks memory bandwidth in a single node environment, helping to compare local vs. distributed memory operation performance. |
-| **MPIFFT**                   | Gflop/s: 8.43, max error: 1.89e-15                                  | MPIFFT tests the performance of Fast Fourier Transform (FFT) in MPI, measuring computational performance and accuracy in signal processing tasks. |
-| **StarFFT**                  | Average Gflop/s: 4.83, Maximum: 5.07                               | StarFFT measures the performance of FFT in a star topology, showing how the distributed system performs with parallelized signal processing operations. |
-| **SingleFFT**                | Single FFT Gflop/s: 6.29                                           | SingleFFT benchmarks FFT performance on a single node, providing a local baseline for comparing distributed FFT performance. |
-| **Latency-Bandwidth**        | Max Ping Pong Latency: 0.0033 ms, Max Ping Pong Bandwidth: 32.75 GB/s | Latency-Bandwidth tests communication latency and bandwidth using the ping pong method, providing insights into the efficiency of inter-process communication in MPI. |
-| **HPL (High-Performance Linpack)** | Parameters: N=20352, Time: 0.42s, Gflops: ~1.99                     | HPL measures high-performance computing power by solving a large linear system, with the result in Gflops indicating computational speed for large-scale tasks. |
+The **HPCC (High-Performance Computing Challenge)** test suite is a collection of benchmarks designed to evaluate the performance of supercomputers and distributed computing systems. It includes tests for computational power, memory bandwidth, and inter-node communication. These benchmarks provide insights into different aspects of system performance, helping compare architectures and optimize computational workloads.
+
+- **VM**
+  1. Install HPCC on every node
+  ```bash
+  sudo apt update
+  sudo apt install -y hpcc
+  ```
+
+  2. Install OpenMPI on every node:
+  ```bash 
+  sudo apt install -y openmpi-bin libopenmpi-dev
+  ```
+
+  >**Warning**: ensure there is a passwordless ssh connection between master and working nodes, try it manually for every combination
+
+  3. On the master node, generate the HPCC configuration file:
+  ```bash 
+  vim hpccinf.txt
+  ```
+  Modify:
+  - **Processor Count**: Set the total number of CPU cores in the cluster.
+  - **Memory Size**: Adjust based on available RAM.
+  - **MPI Settings**: Ensure correct paths.
+
+  Check https://www.advancedclustering.com/act_kb/tune-hpl-dat-file/ to use the right parameters for your cluster.
+
+  For me:
+  ```bash 
+  HPLinpack benchmark input file
+  Innovative Computing Laboratory, University of Tennessee
+  HPL.out      output file name (if any) 
+  6            device out (6=stdout,7=stderr,file)
+  1            # of problems sizes (N)
+  20352         Ns
+  1            # of NBs
+  192           NBs
+  0            PMAP process mapping (0=Row-,1=Column-major)
+  1            # of process grids (P x Q)
+  2            Ps
+  2            Qs
+  16.0         threshold
+  1            # of panel fact
+  2            PFACTs (0=left, 1=Crout, 2=Right)
+  1            # of recursive stopping criterium
+  4            NBMINs (>= 1)
+  1            # of panels in recursion
+  2            NDIVs
+  1            # of recursive panel fact.
+  1            RFACTs (0=left, 1=Crout, 2=Right)
+  1            # of broadcast
+  1            BCASTs (0=1rg,1=1rM,2=2rg,3=2rM,4=Lng,5=LnM)
+  1            # of lookahead depth
+  1            DEPTHs (>=0)
+  2            SWAP (0=bin-exch,1=long,2=mix)
+  64           swapping threshold
+  0            L1 in (0=transposed,1=no-transposed) form
+  0            U  in (0=transposed,1=no-transposed) form
+  1            Equilibration (0=no,1=yes)
+  8            memory alignment in double (> 0)
+  ##### This line (no. 32) is ignored (it serves as a separator). ######
+  0                               Number of additional problem sizes for PTRANS
+  1200 10000 30000                values of N
+  0                               number of additional blocking sizes for PTRANS
+  40 9 8 13 13 20 16 32 64        values of NB
+  ```
+
+  Create the Hosts File on the Master Node:
+  ```bash 
+  vim hosts
+  ```
+
+  and add the following lines:
+  ```bash
+  <worker_node_1_IP> slots=<n_cores_worker_1>
+  <worker_node_2_IP> slots=<n_cores_worker_2>
+  ```
+
+  4. Run HPCC with the correct path:
+  ```bash 
+  mpirun -np 4 -hostfile hosts hpcc
+  ```
+  This will run the HPCC tests on the working nodes. To see results open the `hpccoutf.txt` file. 
+
+  >**WARNING**: SSH connection MUST be passwordless between all the nodes, otherwise you will get an error
+
+  >**TIP**: The files `hosts` and `hpccinf.txt` created before can be put in the distributed system between all the nodes, this way it is simpler to give the right permissions to the nodes to read the files. 
+
+
+- **Containers**
+
+  We have already installed the packages required (see `dockerfile`). So, after having checked the passwordless ssh connection between every pair of nodes, just run the test.
+
+  1. Create the `hpccinf.txt` file:
+  ```bash
+  sudo vim hpccinf.txt 
+  ```
+  2. Insert the same code as before, for me:
+  ```bash 
+  HPLinpack benchmark input file
+  Innovative Computing Laboratory, University of Tennessee
+  HPL.out      output file name (if any) 
+  6            device out (6=stdout,7=stderr,file)
+  1            # of problems sizes (N)
+  20352         Ns
+  1            # of NBs
+  192           NBs
+  0            PMAP process mapping (0=Row-,1=Column-major)
+  1            # of process grids (P x Q)
+  2            Ps
+  2            Qs
+  16.0         threshold
+  1            # of panel fact
+  2            PFACTs (0=left, 1=Crout, 2=Right)
+  1            # of recursive stopping criterium
+  4            NBMINs (>= 1)
+  1            # of panels in recursion
+  2            NDIVs
+  1            # of recursive panel fact.
+  1            RFACTs (0=left, 1=Crout, 2=Right)
+  1            # of broadcast
+  1            BCASTs (0=1rg,1=1rM,2=2rg,3=2rM,4=Lng,5=LnM)
+  1            # of lookahead depth
+  1            DEPTHs (>=0)
+  2            SWAP (0=bin-exch,1=long,2=mix)
+  64           swapping threshold
+  0            L1 in (0=transposed,1=no-transposed) form
+  0            U  in (0=transposed,1=no-transposed) form
+  1            Equilibration (0=no,1=yes)
+  8            memory alignment in double (> 0)
+  ##### This line (no. 32) is ignored (it serves as a separator). ######
+  0                               Number of additional problem sizes for PTRANS
+  1200 10000 30000                values of N
+  0                               number of additional blocking sizes for PTRANS
+  40 9 8 13 13 20 16 32 64        values of NB
+  ```
+  3. Create the `hosts` file as before (remember to check the IP of the workers with `hostname -I`):
+  ```bash 
+  sudo vim hosts
+
+  <worker_node_IP> slots=2
+  <worker_node_IP> slots=2
+  ````
+  >**Observation**: you can set the number of slots (cores) you want, just remember to modify also the `hpccinf.txt` file
+
+  4. Run the test with `mpirun -np 4 -hostfile hosts hpcc`
+  
+
+
+
+Below are the performance values for the 13 tests of the HPCC suite.
+
+| **Test** | **Unit** | **VMs** | **Containers** | **Comment** |
+|----------|--------|----------------|----------------|----------|
+| **MPIRandomAccess** | GUP/s | 0.0033 | 0.010 | The MPIRandomAccess benchmark measures random updates on a distributed array using MPI. The result reflects how well parallel random updates perform. |
+| **StarRandomAccess** | GUP/s | 0.0687 | 0.074 | StarRandomAccess tests random access with a star topology, where a central node communicates with all others, measuring efficiency in this setup. |
+| **SingleRandomAccess** | GUP/s | 0.0921 | 0.101 | This benchmark measures random access performance on a single node without any distributed environment. It shows the efficiency of local memory access. |
+| **MPIRandomAccess_LCG** | GUP/s | 0.0032 | 0.009 | MPIRandomAccess_LCG uses a Linear Congruential Generator for random access, testing how deterministic sequences affect performance in MPI. |
+| **StarRandomAccess_LCG** | GUP/s | 0.067 | 0.078 | StarRandomAccess_LCG tests random access in a star topology using an LCG sequence, assessing the impact of predictable access patterns. |
+| **SingleRandomAccess_LCG** | GUP/s | 0.086 | 0.105 | This is a variant of SingleRandomAccess, using an LCG sequence for random access on a single machine. It helps measure the effect of deterministic access. |
+| **PTRANS** | Wall time / CPU time | Wall: 0.550, CPU: 4.273 | Wall time: 0.42s, CPU time: 0.29s, Residual: 0.00 | PTRANS benchmarks matrix transposition performance, testing the efficiency and accuracy of large-scale transposition operations in memory. |
+| **StarDGEMM** | Gflop/s | 2.909 | Min: 3.94, Avg: 3.95, Max: 3.97 | StarDGEMM benchmarks the General Matrix Multiply operation in a star topology, measuring the performance of matrix multiplication across multiple nodes. |
+| **SingleDGEMM** | Gflop/s | 4.34 | 5.23 | SingleDGEMM measures the performance of DGEMM on a single node, giving a local baseline for computationally intense tasks like matrix multiplication. |
+| **StarSTREAM Copy** | GB/s | 23.20 | 21.66 | StarSTREAM tests memory bandwidth using different memory operations (copy, scale, add, triad) in a star topology, showing how memory bandwidth scales with multiple nodes. |
+| **SingleSTREAM Copy** | GB/s | 41.50 | 62.36 | SingleSTREAM benchmarks memory bandwidth in a single node environment, helping to compare local vs. distributed memory operation performance. |
+| **MPIFFT** | Gflop/s | 2.133 | 8.43, max error: 1.89e-15 | MPIFFT tests the performance of Fast Fourier Transform (FFT) in MPI, measuring computational performance and accuracy in signal processing tasks. |
+| **StarFFT** | Gflop/s | 3.44 | Avg: 4.83, Max: 5.07 | StarFFT measures the performance of FFT in a star topology, showing how the distributed system performs with parallelized signal processing operations. |
+| **SingleFFT** | Gflop/s | 4.07 | 6.29 | SingleFFT benchmarks FFT performance on a single node, providing a local baseline for comparing distributed FFT performance. |
+| **Min-Max Latency** | ms | 0.000628-0.166512 | Max Ping Pong Latency: 0.0033 | Latency-Bandwidth tests communication latency and bandwidth using the ping pong method, providing insights into the efficiency of inter-process communication in MPI. |
+| **Min-Max Ping Pong Bandwidth** | GB/s | 194.301-27467.623 | Max Ping Pong Bandwidth: 32.75 | The benchmark measures inter-node communication performance, showing how bandwidth scales with message sizes and network efficiency. |
+| **HPL** | Gflop/s | 10.64 | Parameters: N=20352, Time: 0.42s, Gflops: ~1.99 | HPL measures high-performance computing power by solving a large linear system, with the result in Gflops indicating computational speed for large-scale tasks. | 
+
+The HPCC benchmark suite was executed in two different environments: **virtual machines (VMs) and containers**. The results indicate that **containers generally outperform VMs across most tests**, highlighting their efficiency in computational and memory-intensive operations.   
+
+- **Random Access Performance:** Containers showed **notable improvements** in all random access tests (*MPIRandomAccess, StarRandomAccess, SingleRandomAccess,* and their *LCG* variants), indicating better memory access efficiency.  
+- **Matrix Operations:** In **DGEMM** and **PTRANS**, containers consistently achieved **higher performance**, showcasing better computational efficiency for linear algebra operations.  
+- **Memory Bandwidth:** While **StarSTREAM Copy** had slightly lower performance in containers, **SingleSTREAM Copy** showed a **significant increase**, suggesting enhanced memory bandwidth in single-node operations.  
+- **FFT Performance:** **MPIFFT, StarFFT, and SingleFFT** demonstrated **stronger performance in containers**, implying optimized floating-point computation.  
+- **Latency & Bandwidth:** Containers had **lower latency and higher bandwidth**, reinforcing their suitability for high-speed inter-node communication.  
+- **HPL Benchmark:** Surprisingly, VMs outperformed containers in **High-Performance Linpack (HPL)**, indicating potential computational overhead or resource contention in the containerized setup.  
+
+**Conclusion**  
+
+Overall, containers provide a **more efficient execution environment** for most HPCC workloads, especially in **memory access, computational efficiency, and communication latency**, making them a compelling choice for HPC workloads.
 
 ---
 
-#### Network (Iperf3)
+#### Network (iPerf3)
+
+**iPerf3** is a network performance measurement tool used to test bandwidth, latency, and jitter between two endpoints. It is commonly used for evaluating network throughput and diagnosing performance bottlenecks.
+
+iPerf3 test:
+- One device acts as a **server** (`iperf3 -s`), while another runs as a **client** (`iperf3 -c <server-IP>`).  
+- Supports TCP and UDP protocols, allowing for **bandwidth, jitter, and packet loss analysis**. 
+- Users can adjust:
+  - **Test duration**
+  - **Parallel streams**
+  - **Window size**  
+This helps simulate different network conditions.
+- Measures **upload and download speeds** separately or simultaneously.
+- Reports:
+  - **Bandwidth**
+  - **Retransmissions**
+  - **Congestion control details** 
+
+iPerf3 is widely used in networking to analyze **link capacity, detect bottlenecks, and compare performance** across different network configurations.
 
 
+To run it, start the server in a node using the command `iperf3 -s`. Then, run iperf3 client in another node using the command `iperf3 -c <server_IP>`.
 
-| Test Scenario      | Direction  | Total Transfer | Average Bitrate | Retransmissions |
-|--------------------|------------|---------------|----------------|----------------|
-| Master1 → Node1  | Send       | 148 GBytes    | 127 Gbits/sec  | 150            |
-| Master1 ← Node1  | Receive    | 145 GBytes    | 124 Gbits/sec  | 1084           |
-| Node1 → Node2    | Send       | 147 GBytes    | 126 Gbits/sec  | 1497           |
-| Node1 ← Node2    | Receive    | 143 GBytes    | 123 Gbits/sec  | 262            |
+The following are the results I obtained:
+- **VM**
+  | Test                         | Interval   | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmits | Comments                               |
+  |------------------------------|------------|-------------------|---------------------|-------------|----------------------------------------|
+  | **Master - Node1 (Sender)**   | 0-10 sec   | 2.09               | 1.79                | 315         | Stable performance, moderate retransmits. |
+  | **Master - Node1 (Receiver)** | 0-10 sec   | 2.09               | 1.79                | 0           | High throughput with no retransmits.   |
+  | **Node1 - Node2 (Sender)**    | 0-10 sec   | 2.15               | 1.84                | 270         | Stable performance, slight fluctuations. |
+  | **Node1 - Node2 (Receiver)**  | 0-10 sec   | 2.15               | 1.84                | 0           | Stable throughput, minimal retransmits. |
 
-Observations & Comments
+  **Reverse Mode**:
 
-1. **High Throughput:** 
-   - The network achieves speeds above 120 Gbits/sec in all tests, indicating strong performance.
-   
-2. **Retransmissions:**
-   - The highest retransmissions were observed in the **Node1 → Node2** direction (1497), which may indicate network congestion or buffer limitations.
-   - The **Master1 ← Node1** test also had a notable number of retransmissions (1084), suggesting potential issues in the reverse traffic path.
-   
-3. **Stability:**
-   - Bitrates remained fairly stable, but there were slight fluctuations, particularly in reverse tests where the rate dropped towards the end (e.g., **Node1 ← Node2** showed a gradual decline in performance).
-   
-4. **Possible Improvements:**
-   - If high retransmissions are an issue, consider tuning TCP settings such as congestion control algorithms.
-   - Test with different buffer sizes (`-w` flag in iperf3) to see if performance changes.
-   - Monitor container networking settings to rule out resource limitations affecting network stack performance.
+  | Test                         | Interval   | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmits | Comments                               |
+  |------------------------------|------------|-------------------|---------------------|-------------|----------------------------------------|
+  | **Master - Node1 (Receiver)** | 0-10 sec   | 2.34               | 2.01                | 1041        | High throughput with significant retransmits. |
+  | **Master - Node1 (Sender)**   | 0-10 sec   | 2.34               | 2.01                | 0           | Stable throughput with no retransmits. |
+  | **Node1 - Node2 (Receiver)**  | 0-10 sec   | 2.07               | 1.78                | 45          | Slight drop in throughput compared to Sender test. |
+  | **Node1 - Node2 (Sender)**    | 0-10 sec   | 2.07               | 1.78                | 0           | Good throughput with minimal retransmits. |
 
-Overall, the network performs well, but optimizing retransmission rates could further improve reliability.
+  **Analysis**
+
+  - The tests show good throughput between nodes, with average transfer rates ranging from 1.78 to 2.01 Gbits/sec.
+  - There were moderate retransmits in the forward direction, especially from Master to Node1, but overall performance remains stable.
+  - Reverse mode tests generally show higher throughput, but with more retransmits, especially in the Master to Node1 direction.
+  - Overall, the performance is consistent with minor fluctuations in the throughput.
+
+- **Containers**
+  | Test             | Interval   | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmits | Comments                        |
+  |------------------|------------|-------------------|---------------------|-------------|---------------------------------|
+  | **Master01 - Node01 (Sender)** | 0-10 sec   | 142               | 122                 | 1           | Stable performance, slight retransmit.  |
+  | **Master01 - Node01 (Receiver)** | 0-10 sec   | 142               | 122                 | 0           | High throughput with minimal retransmits. |
+  | **Node01 - Node02 (Sender)**   | 0-10 sec   | 140               | 120                 | 2           | Slight drop in bitrate towards the end. |
+  | **Node01 - Node02 (Receiver)** | 0-10 sec   | 140               | 120                 | 0           | Consistent throughput but some retransmits. |
+
+  **Reverse Mode**:
+
+  | Test             | Interval   | Transfer (GBytes) | Bitrate (Gbits/sec) | Retransmits | Comments                        |
+  |------------------|------------|-------------------|---------------------|-------------|---------------------------------|
+  | **Master01 - Node01 (Receiver)** | 0-10 sec   | 141               | 121                 | 2           | Slight variation in throughput, minimal retransmits. |
+  | **Master01 - Node01 (Sender)**   | 0-10 sec   | 141               | 121                 | 0           | Consistent throughput with minimal retransmits. |
+  | **Node01 - Node02 (Receiver)** | 0-10 sec   | 137               | 118                 | 1           | Stable performance but slight drop in throughput. |
+  | **Node01 - Node02 (Sender)**   | 0-10 sec   | 137               | 118                 | 0           | Good throughput, slight retransmits towards the end. |
+
+  **Analysis**:
+
+  - The tests show good throughput between nodes, with average transfer rates ranging from 118 to 122 Gbits/sec.
+  - There were some minor retransmits, but the overall performance is stable with low packet loss.
+  - Reverse mode tests have slightly lower performance compared to direct mode, but the difference is not significant.
+
+- **Comparison**
+
+  - **Throughput**: 
+    - In **VM tests**, the throughput ranges from 1.78 to 2.01 Gbits/sec, while **container tests** show a higher range of 118 to 122 Gbits/sec.
+    - Containers demonstrate significantly higher throughput, suggesting better performance compared to the VM setup.
+
+  - **Retransmits**:
+    - **VM tests** show a higher number of retransmits, particularly in reverse mode (up to 1041 retransmits from Master to Node1).
+    - **Container tests** exhibit fewer retransmits, with a maximum of 2 in forward mode, indicating more stable network conditions.
+
+  - **Reverse Mode Performance**:
+    - In both tests, reverse mode experiences a drop in throughput, but it is more significant in the VM tests. The **VM reverse mode** tests also show a high number of retransmits, especially between Master and Node1, while the **container reverse mode** tests show slight variations with minimal retransmits.
+
+  **Conclusion:**
+  - Containers outperform the VM setup in terms of throughput, with more stable performance and fewer retransmits.
+  - **VM setup** shows stable throughput but with some issues in reverse mode and moderate retransmits.
+  - Overall, **containers** are more efficient, with significantly higher transfer rates and fewer network issues compared to **VMs**.
 
 ---
 
 #### Stress_ng 
 
+`stress-ng` is a stress testing tool that can apply workloads to various system components such as CPU, memory, I/O, and more. It is commonly used to test system stability, performance, and reliability under heavy loads.
+Features:
+- **CPU Stress**: Maximize CPU usage by running multiple threads to simulate heavy computations.
+- **Memory Stress**: Allocate and utilize large amounts of memory to check stability under load.
+- **I/O Stress**: Stress test disk and network input/output operations.
+- **System Resource Testing**: Stress other subsystems such as cache, interrupts, and file systems.
+
+You can run stress tests with different parameters based on what component you want to test. Here are some examples:
+
+
+To run it, create the usual `hosts` file as before and then run:
+```bash
+mpirun --hostfile hosts -np 4 stress-ng --cpu 1 --timeout 60s --metrics-brief --verbose
+```
+
+My results are:
 
 | Parameter           | Value |
 |--------------------|------|
