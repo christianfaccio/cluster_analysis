@@ -3,6 +3,7 @@
     <h3>Author: Christian Faccio</h3>
     <h5>Email: christianfaccio@outlook.it</h4>
     <h5>Github: <a href="https://github.com/christianfaccio" target="_blank">christianfaccio</a></h5>
+    <h6>The following project aims to create a cluster of machines departing from two different approaches: Virtual machines and Docker containers. By implementing both, it is possible to compare the performance and efficiency of virtualized versus containerized clustering.</h6>
 </div>
 
 ---
@@ -10,8 +11,27 @@
 
 ## Table of Contents
 - [Requirements](#requirements)
-- [VM Cluster](#vmcluster)
+- [VM Cluster](#vm-cluster)
+  - [Specifications](#specifications)
+  - [Configuring the template VM](#configuring-the-template-vm)
+  - [Master Node](#master-node)
+    - [Initial Settings](#initial-settings)
+    - [SSH Connection](#ssh-connection)
+    - [Network Configuration](#network-configuration)
+  - [Working Nodes](#working-nodes)
+  - [DHCP and DNS Configuration](#dhcp-and-dns-configuration)
+  - [Master Node as Gateway](#master-node-as-gateway)
+  - [SSH on Working Node](#ssh-on-working-node)
+  - [Distributed Filesystem](#distributed-filesystem)
 - [Container Cluster](#containercluster)
+  - [Configuring the files](#configuring-the-files)
+  - [Starting the containers](#starting-the-containers)
+- [Measuring Performances](#measuring-performances)
+  - [HPCC](#hpcc)
+  - [Network](#network-iperf3)
+  - [Stress_ng](#stress_ng)
+  - [Sysbench](#sysbench)
+  - [Disk I/O](#disk-io-iozone)
 
 The instructions below allowed me to create a cluster of VM and of containers. For the Virtual Machines I have used VirtualBox and for the containers Docker, but the general concepts can be applied to other virtualization software with the right changes. 
 
@@ -115,7 +135,7 @@ or other network elements.
 
 ![Internal Network](VM/assets/tutorial5.png)
 
-## Master Node
+### Master Node
 
 It is time now to create the first clone, the Master Node. To do so, right click on the template VM
 and select Clone. Name it **master** and proceed with the cloning.
@@ -124,7 +144,7 @@ and select Clone. Name it **master** and proceed with the cloning.
 
 Before starting the master node VM, we need to configure the network settings and the port forwarding for ssh connection.
 
-### Initial Settings
+#### Initial Settings
 - First things first, and since the hostname is still the same as the template, we need to change it. Edit
 the file **/etc/hostname** and replace the current hostname with the new one. Save and exit.
 ```bash
@@ -144,7 +164,7 @@ This will allow you to connect to the master node via SSH.
 
 Save the settings and start the master node VM.
 
-### SSH connection
+#### SSH connection
 
 You can bootstrap the VM and ssh from a terminal of your Host Machine (if you like).
 On the master node, install the openssh-server package:
@@ -180,7 +200,7 @@ ssh-copy-id -p 3002 <username>@127.0.0.1
 ```
 Now you can connect to the master node without typing the password.
 
-### Network Configuration
+#### Network Configuration
 
 Let’s now check the network settings. The master node should have two network interfaces: one
 connected to the internet (NAT) and the other connected to the internal network.
@@ -247,7 +267,7 @@ We do not specify a static IP for the working nodes since we will later set up a
 master node to assign IPs dynamically to the working nodes.
 
 
-## Working Nodes
+### Working Nodes
 
 Now redo the same process for the two working nodes.
 
@@ -279,7 +299,7 @@ ff02::2 ip6-allrouters
 
 Restart the VMs to apply the changes.
 
-## DHCP and DNS configuration
+### DHCP and DNS configuration
 
 To configure DHCP on your master node, you can use a tool like dnsmasq or isc-dhcp-server. Since
 you’re setting up a network and assigning IPs dynamically, let’s go through the configuration steps
@@ -444,7 +464,7 @@ hostname -I
 
 Now just clone this working node to create as many other nodes as you want, change their hostname and you are set up. Remember to check if they have the same IP assigned.
 
-## Distributed Filesystem
+### Distributed Filesystem
 
 NFS is one of the most commonly used distributed file systems for sharing files across multiple
 nodes in a network.
@@ -625,7 +645,7 @@ Below are the performance values for the 13 tests of the HPCC suite.
 
 
 ---
-#### Network test (Iperf3)
+#### Network (Iperf3)
 
 Start the server in a VM:
 ```bash 
@@ -658,7 +678,7 @@ The results suggest that while the network is fast, there may be occasional pack
 
 ---
 
-#### Stress-ng Test Results
+#### Stress-ng 
 
 Test Configuration:
 - **Stress-ng Version**: 0.17.06
@@ -701,7 +721,7 @@ The stress tests on all nodes (Master, Node01, and Node02) were successfully com
 
 ---
 
-#### Disk I/O test (IOZone)
+#### Disk I/O (IOZone)
 
 ```bash
 iozone -a -i 0 -i 1 -i 2 -f ./testfile > iozone_distrsys_output.txt
@@ -728,7 +748,7 @@ iozone -a -i 0 -i 1 -i 2 -f ./testfile > iozone_distrsys_output.txt
 
 ## Containers' Cluster
 
-#### Configuring the files
+### Configuring the files
 
 - `dockerfile`
 ```bash
@@ -846,7 +866,7 @@ volumes:
     driver: local
 ```
 ---
-#### Starting the containers
+### Starting the containers
 
 Generate SSH keys:
 ```bash 
@@ -892,7 +912,7 @@ Now the cluster should work fine and should ensure passwordless ssh connection b
 
 >**WARNING**: `bash: history: /home/user/.bash_history: cannot create: Permission denied`, if it occurs, just create the `.bash_history`file with this command `sudo touch /home/user/.bash_history`.
 ---
-## Measuring Performances
+### Measuring Performances
 
 #### HPCC
 
@@ -949,7 +969,7 @@ Overall, the network performs well, but optimizing retransmission rates could fu
 
 ---
 
-## Stress_ng Test Results
+#### Stress_ng 
 
 
 | Parameter           | Value |
@@ -991,7 +1011,11 @@ Suggested Improvements
 
 ---
 
-## Disk I/O test (IOZone)
+#### Sysbench
+
+---
+
+#### Disk I/O test (IOZone)
 
 ```bash
 touch /shared/testfile
