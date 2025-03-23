@@ -535,48 +535,6 @@ sudo mount -a
 
 ---
 
----
-
-#### Stress-ng 
-
-Test Configuration:
-- **Stress-ng Version**: 0.17.06
-- **Test Duration**: 60 seconds per stressor
-- **Test Command**: 
-```bash
-mpirun --hostfile hosts -np 4 stress-ng --cpu 1 --timeout 60s --metrics-brief --verbose
-```
-- **System Information**:
-  - **OS**: Ubuntu 6.8.0-55-generic
-  - **Kernel**: 6.8.0-55-generic
-  - **CPU**: 2 processors (Online: 2, Configured: 2)
-  - **RAM**: 1.9 GB (Free: 1.1 GB)
-  - **Filesystem Type**: ext2 (Master), nfs (Node01, Node02)
-
-Nodes Tested:
-1. **Master Node** (master01)
-2. **Node 1** (node01)
-3. **Node 2** (node02)
-
-Test Results:
-
-| Node         | Direction       | Stressors Started | Stressors Exited | Time Taken   | Metrics Check |
-|--------------|-----------------|-------------------|------------------|--------------|---------------|
-| **Master01** | CPU Stress Test | 2                 | 2                | 1 min, 0.08s  | Passed (2 CPU)|
-| **Node01**   | CPU Stress Test | 2                 | 2                | 1 min, 0.04s  | Passed (2 CPU)|
-| **Node02**   | CPU Stress Test | 2                 | 2                | 1 min, 0.07s  | Passed (2 CPU)|
-
-Key Observations:
-- All three nodes ran the stress tests for **60 seconds** with 2 CPU stressors each.
-- **All tests passed successfully** without any failures.
-- **Metrics** for the stressors were validated as sane for all nodes.
-- The performance was **stable across nodes**, with minor variations in test completion times (between **1 min, 0.04s** and **1 min, 0.08s**).
-- The **RAM** usage was observed as sufficient (1.9GB total, with 1.1GB free) across all nodes during the tests.
-
-Conclusion:
-The stress tests on all nodes (Master, Node01, and Node02) were successfully completed with no failures. The system showed good stability and performance under CPU stress for the given time. No issues with resource availability or system crashes were noted, making the system robust under load.
-
-
 
 ---
 
@@ -1073,43 +1031,43 @@ mpirun --hostfile hosts -np 4 stress-ng --cpu 1 --timeout 60s --metrics-brief --
 
 My results are:
 
-| Parameter           | Value |
-|--------------------|------|
-| Command Executed  | `stress-ng --cpu 2 --timeout 60s --verbose` |
-| Stressors Used    | 2 CPU stressors |
-| CPU Method Used   | All |
-| Test Duration     | 60 seconds |
-| Total Processors  | 8 (configured & online) |
-| RAM Available     | 6.7 GB (Total: 7.7 GB) |
-| Swap Available    | 1 GB |
-| Cache Buffer Size | 2048 KB |
-| Failed Tests      | 0 |
-| Skipped Tests     | 0 |
-| Metrics Validity  | All metrics validated and sane |
+| Metric               | VM Node01 (PID 1515) | VM Node02 (PID 1483) | Container Node01 (PID 474) | Container Node02 (PID 177) |
+|----------------------|----------------------|----------------------|----------------------------|----------------------------|
+| **Bogo Ops**         | 13981               | 14881               | 21657                     | 21701                     |
+| **Real Time (secs)** | 60.01               | 60.00               | 60.02                     | 60.00                     |
+| **User Time (secs)** | 56.62               | 59.89               | 59.78                     | 59.73                     |
+| **Sys Time (secs)**  | 0.00                | 0.00                | 0.01                      | 0.00                      |
+| **Bogo Ops/s (Real)**| 232.98              | 248.01              | 360.85                    | 361.67                    |
+| **Bogo Ops/s (Usr+Sys)** | 246.91         | 248.46              | 362.23                    | 363.29                    |
+| **RAM Total**        | 1.9G                | 1.9G                | 7.7G                      | 7.7G                      |
+| **RAM Free**         | 1.3G                | 1.4G                | 4.0G                      | 4.0G                      |
+| **Swap Free**        | 0.0                 | 0.0                 | 1024.0M                   | 1024.0M                   |
+| **Processors Online**| 2                   | 2                   | 8                         | 8                         |
+| **Processors Configured** | 2             | 2                   | 8                         | 8                         |
+| **File System Type** | nfs                 | nfs                 | ext2                      | ext2                      |
+| **Blocks Available** | 78027               | 78027               | 249183974                 | 249183974                 |
 
-Observations & Comments
+Comments:
 
-1. **CPU Load Distribution:**
-   - The stress test ran on **2 CPU cores** (CPU 6 & 7), effectively isolating the workload to specific processors.
-   - The **'all' method** was used, meaning various CPU stress algorithms were executed.
+1. **Performance Comparison**:
+   - **Containers** on both nodes show significantly higher **Bogo Ops/s** (around 360) compared to **VMs** (around 240). This indicates that containers are more efficient in CPU stress testing, likely due to lower overhead and better resource utilization.
+   - **Node02** in both environments (VM and container) performs slightly better than **Node01**, as seen in the higher **Bogo Ops** and **Bogo Ops/s**.
 
-2. **System Stability:**
-   - No failures or skipped tests indicate **a stable system under stress**.
-   - The metrics were validated and deemed **trustworthy**, meaning performance data is reliable.
+2. **Resource Utilization**:
+   - **VMs** have lower **RAM Free** (1.3G-1.4G) compared to **containers** (4.0G), indicating that VMs are more resource-constrained.
+   - **VMs** have no swap space available, which could lead to performance degradation under heavy memory load, whereas **containers** have 1G of swap space.
 
-3. **Memory & Cache Handling:**
-   - The system had **sufficient free RAM (6.7 GB available)**, meaning no major memory bottlenecks occurred.
-   - The **shared cache buffer was 2048 KB**, which could be adjusted for more intensive workloads.
+3. **CPU Usage**:
+   - The **User Time** is close to the **Real Time** in both environments, indicating that the CPU stressor is effectively utilizing the CPU resources.
+   - The **Sys Time** is negligible in both cases, suggesting minimal kernel overhead during the stress test.
 
-4. **Overall Performance:**
-   - The test completed successfully in **60.02 seconds**, matching the expected runtime.
-   - If testing more extreme conditions, consider **increasing the number of CPU stressors** or testing **different stressor methods**.
+4. **System Configuration**:
+   - **VMs** are running on a **2-core** system, while **containers** are on an **8-core** system. This difference in core count likely contributes to the higher performance observed in the containers.
 
-Suggested Improvements
-- To fully utilize the system, **increase the number of CPU stressors** closer to the total available processors (e.g., `--cpu 8`).
-- Test with **different CPU stress methods** (e.g., `--cpu-method matrixprod`) for deeper insights.
-- Monitor system temperatures and CPU throttling effects under extended stress tests.
-
+5. **Conclusion**:
+   - **Containers** outperform **VMs** in CPU stress testing, likely due to better resource allocation and lower overhead.
+   - **VMs** are more resource-constrained, particularly in terms of RAM, which could impact performance under heavier workloads.
+   - Both environments are stable and completed the stress test successfully without any failures or untrustworthy metrics.
 ---
 
 #### Sysbench
