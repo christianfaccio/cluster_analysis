@@ -1,0 +1,112 @@
+stress-ng: debug: [133] invoked with 'stress-ng --io 2 --timeout 60s --metrics-brief --verbose' by user 1001 'user'
+stress-ng: debug: [133] stress-ng 0.17.06
+stress-ng: debug: [133] system: Linux 4eeb4661ed79 6.10.14-linuxkit #1 SMP Mon Feb 24 16:35:16 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [133] RAM total: 7.7G, RAM free: 6.4G, swap free: 1015.1M
+stress-ng: debug: [133] temporary file path: '/shared', filesystem type: tmpfs (1003212 blocks available)
+stress-ng: debug: [133] 8 processors online, 8 processors configured
+stress-ng: debug: [140] invoked with 'stress-ng --io 2 --timeout 60s --metrics-brief --verbose' by user 1001 'user'
+stress-ng: debug: [140] stress-ng 0.17.06
+stress-ng: debug: [140] system: Linux 59a259fbda36 6.10.14-linuxkit #1 SMP Mon Feb 24 16:35:16 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [140] RAM total: 7.7G, RAM free: 6.4G, swap free: 1015.1M
+stress-ng: debug: [140] temporary file path: '/shared', filesystem type: tmpfs (1003212 blocks available)
+stress-ng: debug: [140] 8 processors online, 8 processors configured
+stress-ng: info:  [140] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [139] invoked with 'stress-ng --io 2 --timeout 60s --metrics-brief --verbose' by user 1001 'user'
+stress-ng: debug: [139] stress-ng 0.17.06
+stress-ng: debug: [139] system: Linux 59a259fbda36 6.10.14-linuxkit #1 SMP Mon Feb 24 16:35:16 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [139] RAM total: 7.7G, RAM free: 6.4G, swap free: 1015.1M
+stress-ng: debug: [139] temporary file path: '/shared', filesystem type: tmpfs (1003212 blocks available)
+stress-ng: debug: [139] 8 processors online, 8 processors configured
+stress-ng: info:  [139] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [134] invoked with 'stress-ng --io 2 --timeout 60s --metrics-brief --verbose' by user 1001 'user'
+stress-ng: debug: [134] stress-ng 0.17.06
+stress-ng: debug: [134] system: Linux 4eeb4661ed79 6.10.14-linuxkit #1 SMP Mon Feb 24 16:35:16 UTC 2025 aarch64, gcc 13.2.0, glibc 2.39
+stress-ng: debug: [134] RAM total: 7.7G, RAM free: 6.4G, swap free: 1015.1M
+stress-ng: debug: [134] temporary file path: '/shared', filesystem type: tmpfs (1003212 blocks available)
+stress-ng: debug: [134] 8 processors online, 8 processors configured
+stress-ng: info:  [134] setting to a 1 min, 0 secs run per stressor
+stress-ng: info:  [133] setting to a 1 min, 0 secs run per stressor
+stress-ng: debug: [140] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [139] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [134] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [133] cache allocate: using defaults, cannot determine cache level details
+stress-ng: debug: [140] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [140] dispatching hogs: 2 io
+stress-ng: debug: [140] starting stressors
+stress-ng: debug: [134] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [134] dispatching hogs: 2 io
+stress-ng: debug: [134] starting stressors
+stress-ng: debug: [140] 2 stressors started
+stress-ng: debug: [139] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [139] dispatching hogs: 2 io
+stress-ng: debug: [135] io: [135] started (instance 0 on CPU 3)
+stress-ng: debug: [141] io: [141] started (instance 0 on CPU 7)
+stress-ng: debug: [139] starting stressors
+stress-ng: debug: [142] io: [142] started (instance 1 on CPU 6)
+stress-ng: debug: [133] cache allocate: shared cache buffer size: 2048K
+stress-ng: info:  [133] dispatching hogs: 2 io
+stress-ng: debug: [133] starting stressors
+stress-ng: debug: [134] 2 stressors started
+stress-ng: debug: [136] io: [136] started (instance 1 on CPU 4)
+stress-ng: debug: [139] 2 stressors started
+stress-ng: debug: [137] io: [137] started (instance 0 on CPU 5)
+stress-ng: debug: [133] 2 stressors started
+stress-ng: debug: [143] io: [143] started (instance 0 on CPU 6)
+stress-ng: debug: [144] io: [144] started (instance 1 on CPU 2)
+stress-ng: debug: [138] io: [138] started (instance 1 on CPU 0)
+stress-ng: info:  [141] io: this is a legacy I/O sync stressor, consider using iomix instead
+stress-ng: info:  [135] io: this is a legacy I/O sync stressor, consider using iomix instead
+stress-ng: info:  [143] io: this is a legacy I/O sync stressor, consider using iomix instead
+stress-ng: info:  [137] io: this is a legacy I/O sync stressor, consider using iomix instead
+stress-ng: debug: [141] io: [141] exited (instance 0 on CPU 0)
+stress-ng: debug: [140] io: [141] terminated (success)
+stress-ng: debug: [143] io: [143] exited (instance 0 on CPU 1)
+stress-ng: debug: [136] io: [136] exited (instance 1 on CPU 7)
+stress-ng: debug: [142] io: [142] exited (instance 1 on CPU 5)
+stress-ng: debug: [144] io: [144] exited (instance 1 on CPU 6)
+stress-ng: debug: [137] io: [137] exited (instance 0 on CPU 3)
+stress-ng: debug: [138] io: [138] exited (instance 1 on CPU 2)
+stress-ng: debug: [135] io: [135] exited (instance 0 on CPU 4)
+stress-ng: debug: [139] io: [143] terminated (success)
+stress-ng: debug: [134] io: [135] terminated (success)
+stress-ng: debug: [134] io: [136] terminated (success)
+stress-ng: debug: [133] io: [137] terminated (success)
+stress-ng: debug: [133] io: [138] terminated (success)
+stress-ng: metrc: [134] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [134]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [134] io               505508     60.00      1.28     44.15      8425.03       11126.87
+stress-ng: debug: [139] io: [144] terminated (success)
+stress-ng: metrc: [139] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [139]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [139] io               504231     60.00      1.24     44.04      8403.75       11135.54
+stress-ng: debug: [139] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [139] skipped: 0
+stress-ng: info:  [139] passed: 2: io (2)
+stress-ng: info:  [139] failed: 0
+stress-ng: info:  [139] metrics untrustworthy: 0
+stress-ng: info:  [139] successful run completed in 1 min, 0.00 secs
+stress-ng: metrc: [133] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [133]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [133] io               505470     60.00      1.32     44.04      8424.43       11144.34
+stress-ng: debug: [133] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [133] skipped: 0
+stress-ng: info:  [133] passed: 2: io (2)
+stress-ng: info:  [133] failed: 0
+stress-ng: info:  [133] metrics untrustworthy: 0
+stress-ng: info:  [133] successful run completed in 1 min, 0.00 secs
+stress-ng: debug: [134] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [134] skipped: 0
+stress-ng: info:  [134] passed: 2: io (2)
+stress-ng: info:  [134] failed: 0
+stress-ng: info:  [134] metrics untrustworthy: 0
+stress-ng: info:  [134] successful run completed in 1 min, 0.00 secs
+stress-ng: debug: [140] io: [142] terminated (success)
+stress-ng: metrc: [140] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [140]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [140] io               504434     60.00      1.20     44.06      8407.14       11145.32
+stress-ng: debug: [140] metrics-check: all stressor metrics validated and sane
+stress-ng: info:  [140] skipped: 0
+stress-ng: info:  [140] passed: 2: io (2)
+stress-ng: info:  [140] failed: 0
+stress-ng: info:  [140] metrics untrustworthy: 0
+stress-ng: info:  [140] successful run completed in 1 min, 0.01 secs

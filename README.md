@@ -3,7 +3,7 @@
     <h3>Author: Christian Faccio</h3>
     <h5>Email: christianfaccio@outlook.it</h4>
     <h5>Github: <a href="https://github.com/christianfaccio" target="_blank">christianfaccio</a></h5>
-    <h6>The following project aims to create a cluster of machines departing from two different approaches: Virtual machines and Docker containers. By implementing both, it is possible to compare the performance and efficiency of virtualized versus containerized clustering.</h6>
+    <h6>This project explores two methods for creating a machine cluster: virtual machines and Docker containers. By implementing both approaches, it assesses their performance and efficiency in a clustered environment.</h6>
 </div>
 
 ---
@@ -23,7 +23,7 @@
   - [Master Node as Gateway](#master-node-as-gateway)
   - [SSH on Working Node](#ssh-on-working-node)
   - [Distributed Filesystem](#distributed-filesystem)
-- [Container Cluster](#containercluster)
+- [Containers' Cluster](#containers-cluster)
   - [Configuring the files](#configuring-the-files)
   - [Starting the containers](#starting-the-containers)
 - [Measuring Performances](#measuring-performances)
@@ -52,6 +52,8 @@ Important things:
 ---
 
 ## VM Cluster
+
+A VM cluster is a collection of virtual machines (VMs) that are interconnected and work together as a single unit to perform tasks. Each VM runs on a hypervisor (virtualization layer) that simulates hardware, allowing multiple isolated virtual instances to share the same physical resources (CPU, RAM, storage).
 
 ### Specifications
 
@@ -538,124 +540,151 @@ sudo mount -a
 
 ## Containers' Cluster
 
+A container cluster consists of multiple interconnected containers that work together, typically using a container orchestration tool like Docker Compose, Kubernetes, or Swarm.
+Here I use Docker Compose for this project. The Dockerfile and docker-compose.yml work together to set up and manage a small HPC-style cluster.
+
 ### Configuring the files
 
 - `dockerfile`
-```bash
-FROM ubuntu:latest
+  This file **defines and manages** a **Docker-based cluster** with one master node (`master1`) and two worker nodes (`node1`, `node2`). It automates:
 
-# Set non-interactive mode for apt-get
-ENV DEBIAN_FRONTEND=noninteractive
+  - **Building & Running Containers**: Uses the **same image** (built from `Dockerfile`) for all nodes.
+  - **Resource Allocation**: Limits **CPU (2 cores)** and **RAM (2GB)** per node.
+  - **Networking**: Connects all nodes via a custom **bridge network (`my_network`)**.
+  - **SSH Access**: Each node has a different SSH port (`2220`, `2221`, `2222`).
+  - **Shared Storage**: Uses **`/shared` as a shared volume** and a temporary in-memory filesystem (`tmpfs`).
 
-# Install required packages
-RUN apt-get update && apt-get install -y \
-    openssh-server rsync iputils-ping \
-    sysbench stress-ng iozone3 iperf3 \
-    netcat-openbsd wget unzip hpcc \
-    mpich vim \
-    openmpi-bin openmpi-common openmpi-doc libopenmpi-dev \
-    sudo \
-    && rm -rf /var/lib/apt/lists/*
+  ```bash
+  FROM ubuntu:latest
 
-# Create SSH folder and set correct permissions
-RUN mkdir -p /var/run/sshd /home/user/.ssh /shared \
-    && chmod 700 /home/user/.ssh
+  # Set non-interactive mode for apt-get
+  ENV DEBIAN_FRONTEND=noninteractive
 
-# Create a new user 'user' with a home directory
-RUN useradd -m -s /bin/bash user \
-    && echo "user:userpassword" | chpasswd \
-    && echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+  # Install required packages
+  RUN apt-get update && apt-get install -y \
+      openssh-server rsync iputils-ping \
+      sysbench stress-ng iozone3 iperf3 \
+      netcat-openbsd wget unzip hpcc \
+      mpich vim \
+      openmpi-bin openmpi-common openmpi-doc libopenmpi-dev \
+      sudo \
+      && rm -rf /var/lib/apt/lists/*
 
-# Ensure SSH is configured for user
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config \
-    && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config \
-    && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
-    && sed -i 's|#AuthorizedKeysFile.*|AuthorizedKeysFile .ssh/authorized_keys|' /etc/ssh/sshd_config
+  # Create SSH folder and set correct permissions
+  RUN mkdir -p /var/run/sshd /home/user/.ssh /shared \
+      && chmod 700 /home/user/.ssh
 
-# Copy SSH keys for user (passwordless login)
-COPY ssh_keys/id_rsa.pub /home/user/.ssh/authorized_keys
-COPY ssh_keys/id_rsa /home/user/.ssh/id_rsa
+  # Create a new user 'user' with a home directory
+  RUN useradd -m -s /bin/bash user \
+      && echo "user:userpassword" | chpasswd \
+      && echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Set correct permissions for SSH keys (user)
-RUN chmod 600 /home/user/.ssh/id_rsa /home/user/.ssh/authorized_keys \
-    && chown -R user:user /home/user/.ssh
+  # Ensure SSH is configured for user
+  RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config \
+      && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config \
+      && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
+      && sed -i 's|#AuthorizedKeysFile.*|AuthorizedKeysFile .ssh/authorized_keys|' /etc/ssh/sshd_config
 
-# Expose SSH port
-EXPOSE 22
+  # Copy SSH keys for user (passwordless login)
+  COPY ssh_keys/id_rsa.pub /home/user/.ssh/authorized_keys
+  COPY ssh_keys/id_rsa /home/user/.ssh/id_rsa
 
-# Switch to user
-USER user
-WORKDIR /home/user
+  # Set correct permissions for SSH keys (user)
+  RUN chmod 600 /home/user/.ssh/id_rsa /home/user/.ssh/authorized_keys \
+      && chown -R user:user /home/user/.ssh
 
-# Start SSH service correctly with host key generation
-CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /shared && sudo chmod -R 777 /shared
-```
+  # Expose SSH port
+  EXPOSE 22
+
+  # Switch to user
+  USER user
+  WORKDIR /home/user
+
+  # Start SSH service correctly with host key generation
+  CMD sudo ssh-keygen -A && sudo /usr/sbin/sshd -D -e && sudo chown -R user:user /shared && sudo chmod -R 777 /shared
+  ```
 
 - `docker-compose.yaml`
-```bash 
+  This file **defines the environment** for the containers, installing necessary tools and configuring the system.
 
-services:
-  master1:
-    build: .
-    container_name: master
-    networks:
-      - my_network
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 2G
-    ports:
-      - "2220:22"
-    volumes:
-      - shared_volume:/shared
-      - ./ssh_keys:/root/.ssh # Mount pre-generated SSH keys for passwordless access
-    tmpfs:
-      - /shared:mode=777
+  1. **Uses `Ubuntu:latest`** as the base image.
+  2. **Installs essential packages** like:
+    - `openssh-server`: For remote access.
+    - `mpich` & `openmpi`: Message Passing Interface (MPI) for parallel computing.
+    - `sysbench`, `stress-ng`, `iozone3`, `iperf3`: Performance benchmarking tools.
+    - `hpcc`: HPC benchmark suite.
+  3. **Creates a `user` with sudo privileges** for secure access.
+  4. **Configures SSH for passwordless login**:
+    - Copies pre-generated SSH keys (`id_rsa`, `id_rsa.pub`).
+    - Adjusts permissions and enables **public key authentication**.
+  5. **Exposes port `22` for SSH**.
+  6. **Runs SSHD at startup** and ensures correct permissions for `/shared`.
+  
+  ```bash 
+  services:
+    master1:
+      build: .  # Use the Dockerfile in the current directory to build the image
+      container_name: master  # Set the container name to 'master'
+      networks:
+        - my_network  # Attach this container to the custom bridge network
+      deploy:
+        resources:
+          limits:
+            cpus: "2"  # Restrict the container to use a maximum of 2 CPU cores
+            memory: 2G  # Limit the container's memory usage to 2GB
+      ports:
+        - "2220:22"  # Map port 2220 on the host to port 22 inside the container (SSH access)
+      volumes:
+        - shared_volume:/shared  # Mount shared volume for data exchange between containers
+        - ./ssh_keys:/root/.ssh  # Mount pre-generated SSH keys for passwordless access
+      tmpfs:
+        - /shared:mode=777  # Create a temporary filesystem at /shared with full permissions
 
-  node1:
-    build: .
-    container_name: node1
-    networks:
-      - my_network
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 2G
-    ports:
-      - "2221:22"
-    volumes:
-      - shared_volume:/shared
-      - ./ssh_keys:/root/.ssh
-    tmpfs:
-      - /shared:mode=777
-  node2:
-    build: .
-    container_name: node2
-    networks:
-      - my_network
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 2G
-    ports:
-      - "2222:22"
-    volumes:
-      - shared_volume:/shared
-      - ./ssh_keys:/root/.ssh
-    tmpfs:
-      - /shared:mode=777
+    node1:
+      build: .  # Use the same Dockerfile for worker node
+      container_name: node1  # Set the container name to 'node1'
+      networks:
+        - my_network  # Attach to the same network as the master node
+      deploy:
+        resources:
+          limits:
+            cpus: "2"
+            memory: 2G
+      ports:
+        - "2221:22"  # Assign a different SSH port for node1
+      volumes:
+        - shared_volume:/shared  # Mount shared volume to enable data sharing
+        - ./ssh_keys:/root/.ssh  # Use the same SSH keys for passwordless login
+      tmpfs:
+        - /shared:mode=777  # Temporary shared filesystem with full permissions
+    
+    node2:
+      build: .  # Build using the same configuration
+      container_name: node2  # Name this container 'node2'
+      networks:
+        - my_network
+      deploy:
+        resources:
+          limits:
+            cpus: "2"
+            memory: 2G
+      ports:
+        - "2222:22"  # Assign another unique SSH port for node2
+      volumes:
+        - shared_volume:/shared
+        - ./ssh_keys:/root/.ssh
+      tmpfs:
+        - /shared:mode=777
 
-networks:
-  my_network:
-    driver: bridge
+  networks:
+    my_network:
+      driver: bridge  # Use a bridge network for inter-container communication
 
-volumes:
-  shared_volume:
-    driver: local
-```
+  volumes:
+    shared_volume:
+      driver: local  # Use a local volume for persistent shared storage
+
+  ```
 ---
 ### Starting the containers
 
@@ -843,10 +872,8 @@ The **HPCC (High-Performance Computing Challenge)** test suite is a collection o
   0                               number of additional blocking sizes for PTRANS
   40 9 8 13 13 20 16 32 64        values of NB
   ```
-  3. Create the `hosts` file as before (remember to check the IP of the workers with `hostname -I`):
+  3. Create the `hosts` file as before (remember to check the IP of the workers with `hostname -I`) with `sudo vim hosts`:
   ```bash 
-  sudo vim hosts
-
   <worker_node_IP> slots=2
   <worker_node_IP> slots=2
   ````
@@ -861,10 +888,10 @@ Below are the performance values for the 13 tests of the HPCC suite.
 
 | **Test** | **Unit** | **VMs** | **Containers** | **Comment** |
 |----------|--------|----------------|----------------|----------|
-| **MPIRandomAccess** | GUP/s | 0.0033 | 0.010 | The MPIRandomAccess benchmark measures random updates on a distributed array using MPI. The result reflects how well parallel random updates perform. |
-| **StarRandomAccess** | GUP/s | 0.0687 | 0.074 | StarRandomAccess tests random access with a star topology, where a central node communicates with all others, measuring efficiency in this setup. |
-| **SingleRandomAccess** | GUP/s | 0.0921 | 0.101 | This benchmark measures random access performance on a single node without any distributed environment. It shows the efficiency of local memory access. |
-| **MPIRandomAccess_LCG** | GUP/s | 0.0032 | 0.009 | MPIRandomAccess_LCG uses a Linear Congruential Generator for random access, testing how deterministic sequences affect performance in MPI. |
+| **MPIRandomAccess** | GUP/s | 0.003 | 0.01 | The MPIRandomAccess benchmark measures random updates on a distributed array using MPI. The result reflects how well parallel random updates perform. |
+| **StarRandomAccess** | GUP/s | 0.069 | 0.074 | StarRandomAccess tests random access with a star topology, where a central node communicates with all others, measuring efficiency in this setup. |
+| **SingleRandomAccess** | GUP/s | 0.092 | 0.101 | This benchmark measures random access performance on a single node without any distributed environment. It shows the efficiency of local memory access. |
+| **MPIRandomAccess_LCG** | GUP/s | 0.003 | 0.009 | MPIRandomAccess_LCG uses a Linear Congruential Generator for random access, testing how deterministic sequences affect performance in MPI. |
 | **StarRandomAccess_LCG** | GUP/s | 0.067 | 0.078 | StarRandomAccess_LCG tests random access in a star topology using an LCG sequence, assessing the impact of predictable access patterns. |
 | **SingleRandomAccess_LCG** | GUP/s | 0.086 | 0.105 | This is a variant of SingleRandomAccess, using an LCG sequence for random access on a single machine. It helps measure the effect of deterministic access. |
 | **PTRANS** | s | Wall: 0.550, CPU: 4.273 | Wall: 0.42s, CPU: 0.29s| PTRANS benchmarks matrix transposition performance, testing the efficiency and accuracy of large-scale transposition operations in memory. |
@@ -875,14 +902,14 @@ Below are the performance values for the 13 tests of the HPCC suite.
 | **MPIFFT** | Gflop/s | 2.133 | 8.43 | MPIFFT tests the performance of Fast Fourier Transform (FFT) in MPI, measuring computational performance and accuracy in signal processing tasks. |
 | **StarFFT** | Gflop/s | 3.44 | 4.83 | StarFFT measures the performance of FFT in a star topology, showing how the distributed system performs with parallelized signal processing operations. |
 | **SingleFFT** | Gflop/s | 4.07 | 6.29 | SingleFFT benchmarks FFT performance on a single node, providing a local baseline for comparing distributed FFT performance. |
-| **Avg. Ping Pong Latency** | ms | 0.098786 | 0.002310 | Latency-Bandwidth tests communication latency and bandwidth using the ping pong method, providing insights into the efficiency of inter-process communication in MPI. |
+| **Avg. Ping Pong Latency** | ms | 0.0988 | 0.0023 | Latency-Bandwidth tests communication latency and bandwidth using the ping pong method, providing insights into the efficiency of inter-process communication in MPI. |
 | **Avg. Ping Pong Bandwidth** | GB/s | 4.756 | 17.148 | The benchmark measures inter-node communication performance, showing how bandwidth scales with message sizes and network efficiency. |
 | **HPL** | Gflop/s | 10.64 | 12.32 | HPL measures high-performance computing power by solving a large linear system, with the result in Gflops indicating computational speed for large-scale tasks. | 
 
 The HPCC benchmark suite was executed in two different environments: **virtual machines (VMs) and containers**. The results indicate that **containers generally outperform VMs across most tests**, highlighting their efficiency in computational and memory-intensive operations.   
 
 1. **Ping Pong Latency**:
-   - The **Avg. Ping Pong Latency** for containers is significantly lower (0.002310 ms) compared to VMs (0.098786 ms). This indicates that containers have a much faster inter-process communication, which is crucial for distributed applications where low latency is important.
+   - The **Avg. Ping Pong Latency** for containers is significantly lower (0.0023 ms) compared to VMs (0.0988 ms). This indicates that containers have a much faster inter-process communication, which is crucial for distributed applications where low latency is important.
    - The lower latency in containers suggests reduced overhead, as containers share the host OS kernel, avoiding the virtualization overhead associated with VMs.
 
 2. **Ping Pong Bandwidth**:
@@ -896,13 +923,11 @@ The HPCC benchmark suite was executed in two different environments: **virtual m
 4. **Efficiency**:
    - Containers have less overhead in terms of system resources compared to VMs, as containers do not require a full operating system for each instance. This leads to better resource utilization, lower latency, and higher throughput in many cases.
    - VMs provide stronger isolation and may be necessary when strong separation between tasks or services is required, but for tasks where performance is the priority, containers are more efficient.
-
-Conclusion:
-   - **Containers** outperform **VMs** in terms of communication latency and bandwidth, making them a better choice for distributed applications and tasks that involve heavy inter-process communication.
-   - **VMs** may still be preferred in environments where stronger isolation between processes or security is needed, but for performance-sensitive tasks, containers offer a more efficient solution.
-**Conclusion**  
+ 
 
 Overall, containers provide a **more efficient execution environment** for most HPCC workloads, especially in **memory access, computational efficiency, and communication latency**, making them a compelling choice for HPC workloads.
+
+>**Observation**: OpenMPI (Open Message Passing Interface) is an open-source implementation of the MPI (Message Passing Interface) standard, designed for high-performance distributed computing. It enables multiple processes running on different nodes (or cores) to communicate efficiently, making it essential for parallel computing and HPC (High-Performance Computing). Specifically, the command `mpirun` is used to start MPI-based programs across a specified number of processes and nodes in a cluster or multi-core environment.
 
 ---
 
@@ -912,7 +937,8 @@ Overall, containers provide a **more efficient execution environment** for most 
 
 iPerf3 test:
 - One device acts as a **server** (`iperf3 -s`), while another runs as a **client** (`iperf3 -c <server-IP>`).  
-- Supports TCP and UDP protocols, allowing for **bandwidth, jitter, and packet loss analysis**. 
+- Supports TCP and UDP protocols, allowing for **bandwidth, jitter, and packet loss analysis**.
+>**Observation**: in this project I chose to test only the TCP connection
 - Users can adjust:
   - **Test duration**
   - **Parallel streams**
@@ -926,7 +952,7 @@ This helps simulate different network conditions.
 
 iPerf3 is widely used in networking to analyze **link capacity, detect bottlenecks, and compare performance** across different network configurations.
 
-Install `iperf3` (if using VMs):
+Install `iperf3` (if not installed):
 ```bash 
 sudo apt update && sudo apt install iperf3
 ```
@@ -1009,59 +1035,62 @@ Features:
 - **CPU Stress**: Maximize CPU usage by running multiple threads to simulate heavy computations.
 - **Memory Stress**: Allocate and utilize large amounts of memory to check stability under load.
 - **I/O Stress**: Stress test disk and network input/output operations.
-- **System Resource Testing**: Stress other subsystems such as cache, interrupts, and file systems.
 
-You can run stress tests with different parameters based on what component you want to test. Here are some examples:
+You can run stress tests with different parameters based on what component you want to test. 
 
-Install `stress_ng` (if using VMs):
+Install `stress_ng` (if not installed):
 ```bash 
 sudo apt update  && sudo apt install stress_ng
 ```
 
 To run the test, create the usual `hosts` file as before and then run:
+- CPU test
 ```bash
-mpirun --hostfile hosts -np 4 stress-ng --cpu 1 --timeout 60s --metrics-brief --verbose
+mpirun --hostfile hosts -np 4 stress-ng --cpu 2 --timeout 60s --metrics-brief --verbose
+```
+- Memory test
+```bash
+mpirun --hostfile hosts -np 4 stress-ng --vm 2 --vm-bytes 1G --timeout 60s --metrics-brief --verbose
+```
+- Disk I/O test
+```bash 
+mpirun --hostfile hosts -np 4 stress-ng --io 2 --timeout 60s --metrics-brief --verbose
 ```
 
 My results are:
+- **VM**
+  | **Test** | **Bogo ops** | **Bogo ops/s** |
+  |----------|------------------------|----------------------|----------------------|
+  | CPU | 21532 | 358.71 |
+  | Memory | 760052 | 12634.09 |
+  | Disk I/O | 2799634 | 46659.86 |
 
-| Metric               | VM Node01 (PID 1515) | VM Node02 (PID 1483) | Container Node01 (PID 474) | Container Node02 (PID 177) |
-|----------------------|----------------------|----------------------|----------------------------|----------------------------|
-| **Bogo Ops**         | 13981               | 14881               | 21657                     | 21701                     |
-| **Real Time (secs)** | 60.01               | 60.00               | 60.02                     | 60.00                     |
-| **User Time (secs)** | 56.62               | 59.89               | 59.78                     | 59.73                     |
-| **Sys Time (secs)**  | 0.00                | 0.00                | 0.01                      | 0.00                      |
-| **Bogo Ops/s (Real)**| 232.98              | 248.01              | 360.85                    | 361.67                    |
-| **Bogo Ops/s (Usr+Sys)** | 246.91         | 248.46              | 362.23                    | 363.29                    |
-| **RAM Total**        | 1.9G                | 1.9G                | 7.7G                      | 7.7G                      |
-| **RAM Free**         | 1.3G                | 1.4G                | 4.0G                      | 4.0G                      |
-| **Swap Free**        | 0.0                 | 0.0                 | 1024.0M                   | 1024.0M                   |
-| **Processors Online**| 2                   | 2                   | 8                         | 8                         |
-| **Processors Configured** | 2             | 2                   | 8                         | 8                         |
-| **File System Type** | nfs                 | nfs                 | ext2                      | ext2                      |
-| **Blocks Available** | 78027               | 78027               | 249183974                 | 249183974                 |
+- **Containers**
+  | **Test** | **Bogo ops** | **Bogo ops/s** |
+  |----------|------------------------|----------------------|----------------------|
+  | CPU | 24523 | 408.43 |
+  | Memory | 7099658 | 118275.80 |
+  | Disk I/O | 505508 | 8425.03 | 
+  
 
 Comments:
 
-1. **Performance Comparison**:
-   - **Containers** on both nodes show significantly higher **Bogo Ops/s** (around 360) compared to **VMs** (around 240). This indicates that containers are more efficient in CPU stress testing, likely due to lower overhead and better resource utilization.
-   - **Node02** in both environments (VM and container) performs slightly better than **Node01**, as seen in the higher **Bogo Ops** and **Bogo Ops/s**.
+- **CPU Test**:  
+  - **VM**: Achieved **21,532** operations at **358.71 bogo ops/s**, which indicates moderate CPU performance.  
+  - **Containers**: Performed better with **24,523** operations at **408.43 bogo ops/s**, showing a higher processing rate under stress, which might suggest better CPU resource management in containerized environments.  
 
-2. **Resource Utilization**:
-   - **VMs** have lower **RAM Free** (1.3G-1.4G) compared to **containers** (4.0G), indicating that VMs are more resource-constrained.
-   - **VMs** have no swap space available, which could lead to performance degradation under heavy memory load, whereas **containers** have 1G of swap space.
+- **Memory Test**:  
+  - **VM**: Completed **760,052** operations at **12,634.09 bogo ops/s**, indicating decent memory performance but less efficient than containers.  
+  - **Containers**: Showed a much stronger memory performance with **7,099,658** operations and **118,275.80 bogo ops/s**, demonstrating containers are more efficient at handling memory stress.
 
-3. **CPU Usage**:
-   - The **User Time** is close to the **Real Time** in both environments, indicating that the CPU stressor is effectively utilizing the CPU resources.
-   - The **Sys Time** is negligible in both cases, suggesting minimal kernel overhead during the stress test.
+- **Disk I/O Test**:  
+  - **VM**: Achieved **2,799,634** operations at **46,659.86 bogo ops/s**, which is significantly higher compared to the container results, indicating better disk I/O throughput in the VM environment.  
+  - **Containers**: Completed **505,508** operations at **8,425.03 bogo ops/s**, showing weaker disk performance compared to the VM environment, possibly due to overhead introduced by the containerization layer.
 
-4. **System Configuration**:
-   - **VMs** are running on a **2-core** system, while **containers** are on an **8-core** system. This difference in core count likely contributes to the higher performance observed in the containers.
 
-5. **Conclusion**:
-   - **Containers** outperform **VMs** in CPU stress testing, likely due to better resource allocation and lower overhead.
-   - **VMs** are more resource-constrained, particularly in terms of RAM, which could impact performance under heavier workloads.
-   - Both environments are stable and completed the stress test successfully without any failures or untrustworthy metrics.
+Overall, containers demonstrate better CPU and memory handling, while VMs outperform containers in disk I/O operations. This suggests containers are more suitable for applications with high CPU and memory demands, while VMs may be more appropriate for disk-heavy workloads.
+
+
 ---
 
 #### Sysbench
@@ -1069,7 +1098,7 @@ Comments:
 Sysbench is a benchmarking tool used to evaluate the performance of various system components such as CPU, memory, disk I/O, and database systems. It allows for simulating different workloads and measuring system performance.
 Sysbench is widely used for performance testing and stress testing in server environments.
 
-1. Install `sysbench` on all nodes (for VM):
+1. Install `sysbench` on all nodes (if not installed):
 ```bash
 apt update && apt install -y sysbench
 ```
@@ -1179,7 +1208,7 @@ Use Cases:
 - **Hardware Comparison**: Compare storage devices (SSD vs. HDD).
 - **Bottleneck Identification**: Detect performance bottlenecks in storage subsystems.
 
-Install it in each node (if using VMs):
+Install it in each node (if not installed):
 ```bash 
 sudo apt update & sudo apt install iozone3
 ```
