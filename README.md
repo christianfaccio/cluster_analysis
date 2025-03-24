@@ -34,7 +34,9 @@
   - [Disk I/O](#disk-io-iozone)
 - [Conclusion](#conclusion)
 
-The instructions below allowed me to create a cluster of VM and of containers. For the Virtual Machines I have used VirtualBox and for the containers Docker, but the general concepts can be applied to other virtualization software with the right changes. 
+The instructions below allowed me to create a cluster of VM and of containers. For the Virtual Machines I have used VirtualBox and for the containers Docker, but the general concepts can be applied to other virtualization software with the right changes. Specifically, I set a cluster of three nodes, with one master and two workers.
+
+![](VM/assets/Screenshot%202025-03-21%20at%2015.34.46.png)
 
 OS specification of the host:
 - Chip: Apple M3
@@ -54,8 +56,6 @@ OS specification of the host:
 A VM cluster is a collection of virtual machines (VMs) that are interconnected and work together as a single unit to perform tasks. Each VM runs on a hypervisor (virtualization layer) that simulates hardware, allowing multiple isolated virtual instances to share the same physical resources (CPU, RAM, storage).
 
 ### Specifications
-
-
 
 |  |Master Node | Working Node 1 | Working Node 2 |
 |----------|----------|----------|----------|
