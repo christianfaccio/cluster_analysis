@@ -32,6 +32,7 @@
   - [Stress_ng](#stress_ng)
   - [Sysbench](#sysbench)
   - [Disk I/O](#disk-io-iozone)
+- [Conclusion](#conclusion)
 
 The instructions below allowed me to create a cluster of VM and of containers. For the Virtual Machines I have used VirtualBox and for the containers Docker, but the general concepts can be applied to other virtualization software with the right changes. 
 
@@ -1247,8 +1248,6 @@ My results for the **distributed system** are:
   - **VMs** provide stronger isolation and security but at the cost of higher overhead and reduced I/O performance. They may still be preferable for workloads requiring strict isolation or compatibility with legacy systems.
 
   ---
-
-  ## Conclusion
 
   ## Conclusion
 
