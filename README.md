@@ -36,12 +36,10 @@
 
 The instructions below allowed me to create a cluster of VM and of containers. For the Virtual Machines I have used VirtualBox and for the containers Docker, but the general concepts can be applied to other virtualization software with the right changes. 
 
-Important things:
-- I have used MacOS as the host operating system
-- The VMs are running Ubuntu 20.04
-- The VM cluster comprises one master node and two working nodes
-- Only the master node VM is connected to the internet through a NAT connection
-- Working nodes are connected to the master node via Internal Network
+OS specification of the host:
+- Chip: Apple M3
+- RAM: 16GB
+- OS: macOS (Sequoia 15.3.2)
 
 ## Requirements
 
@@ -1272,9 +1270,8 @@ My results for the **distributed system** are:
   5. **Larger Record Lengths**:
     - As record lengths increase (e.g., 1024 kB, 2048 kB), the performance gap between VMs and containers narrows. Both environments show similar performance for very large record lengths, indicating that the overhead of virtualization or containerization becomes less significant for bulk data transfers.
   
-- **Conclusion**
-  - **Containers** are better suited for I/O-intensive workloads, especially those involving small to medium record lengths and random access patterns. They offer superior performance, lower overhead, and better scalability compared to VMs.
-  - **VMs** provide stronger isolation and security but at the cost of higher overhead and reduced I/O performance. They may still be preferable for workloads requiring strict isolation or compatibility with legacy systems.
+  **Containers** are better suited for I/O-intensive workloads, especially those involving small to medium record lengths and random access patterns. They offer superior performance, lower overhead, and better scalability compared to VMs.
+  **VMs**, instead, provide stronger isolation and security but at the cost of higher overhead and reduced I/O performance. They may still be preferable for workloads requiring strict isolation or compatibility with legacy systems.
 
   ---
 
