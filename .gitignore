@@ -1,5 +1,6 @@
 containers/ssh_keys/id_rsa
 containers/ssh_keys/id_rsa.pub
+presentation.pdf
 presentation.tex
 presentation.log
 presentation.aux
@@ -8,6 +9,5 @@ presentation.out
 presentation.snm
 presentation.toc
 presentation.synctex.gz
-presentation.pdf
 dockercompose.png
 dockerfile.png
